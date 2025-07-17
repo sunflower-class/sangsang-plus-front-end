@@ -1,5 +1,5 @@
-# kafka-react-vite-app
-kafka 연결을 위한 vite react app 보일러 플레이트 저장소 입니다.
+# front-end
+마이크로 서비스를 위한 vite react app 입니다.
 
 # 사전 준비
 - docker: v28.x ('25.7.7 기준 lts)
