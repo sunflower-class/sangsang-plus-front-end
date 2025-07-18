@@ -1,68 +1,244 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+/* 상상더하기 Design System - Modern, Clean, Trustworthy, Intuitive
+All colors MUST be HSL.
+*/
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
+@layer base {
   :root {
-    color: #213547;
-    background-color: #ffffff;
+    /* Core Brand Colors */
+    --primary: 242 37% 46%;              /* #4A47A3 - 신뢰감 있는 파란색 */
+    --primary-foreground: 0 0% 100%;     /* White text on primary */
+    --primary-hover: 242 37% 40%;        /* Darker primary for hover */
+    
+    --secondary: 249 72% 66%;            /* #7868E6 - 활기찬 보라색 */
+    --secondary-foreground: 0 0% 100%;   /* White text on secondary */
+    --secondary-hover: 249 72% 60%;      /* Darker secondary for hover */
+    
+    --accent: 151 68% 81%;               /* #ADF0D1 - 생성적인 녹색 */
+    --accent-foreground: 220 13% 18%;    /* Dark text on accent */
+    --accent-hover: 151 68% 75%;         /* Darker accent for hover */
+
+    /* Background & Layout */
+    --background: 0 0% 100%;             /* Pure white */
+    --foreground: 220 13% 18%;           /* Almost black for text */
+    --background-soft: 220 13% 97%;      /* #F5F5F5 - Light gray backgrounds */
+    
+    /* UI Elements */
+    --card: 0 0% 100%;
+    --card-foreground: 220 13% 18%;
+    --card-border: 220 13% 91%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 13% 18%;
+    
+    --muted: 220 13% 97%;                /* Light gray for muted elements */
+    --muted-foreground: 220 9% 46%;      /* Medium gray for secondary text */
+    
+    --border: 220 13% 91%;               /* Light border color */
+    --input: 220 13% 91%;                /* Input border */
+    --ring: 242 37% 46%;                 /* Focus ring color - same as primary */
+    
+    /* Status Colors */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 151 68% 50%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
+    --gradient-accent: linear-gradient(135deg, hsl(var(--accent)), hsl(151 68% 70%));
+    --gradient-soft: linear-gradient(180deg, hsl(var(--background)), hsl(var(--background-soft)));
+    
+    /* Shadows */
+    --shadow-soft: 0 1px 3px 0 hsl(220 13% 18% / 0.1);
+    --shadow-medium: 0 4px 6px -1px hsl(220 13% 18% / 0.1);
+    --shadow-large: 0 10px 15px -3px hsl(220 13% 18% / 0.1);
+    --shadow-primary: 0 10px 30px -10px hsl(var(--primary) / 0.3);
+    
+    /* Animation */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Radius */
+    --radius: 8px;                       /* Consistent 8px border radius */
+    --radius-large: 12px;
+    --radius-small: 4px;
   }
-  a:hover {
-    color: #747bff;
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
-  button {
-    background-color: #f9f9f9;
+}
+
+@layer base {
+  * {
+    @apply border-border;
   }
+
+  body {
+    @apply bg-background text-foreground font-noto;
+  }
+}
+
+@layer components {
+  /* Button Variants */
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 
+           rounded-lg px-6 py-3 font-medium transition-all duration-300
+           shadow-sm hover:shadow-md;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/90
+           rounded-lg px-6 py-3 font-medium transition-all duration-300
+           shadow-sm hover:shadow-md;
+  }
+  
+  .btn-accent {
+    @apply bg-accent text-accent-foreground hover:bg-accent/90
+           rounded-lg px-6 py-3 font-medium transition-all duration-300
+           shadow-sm hover:shadow-md;
+  }
+  
+  .btn-outline {
+    @apply border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground
+           rounded-lg px-6 py-3 font-medium transition-all duration-300;
+  }
+  
+  .btn-ghost {
+    @apply text-foreground hover:bg-muted
+           rounded-lg px-6 py-3 font-medium transition-all duration-300;
+  }
+
+  /* Card Variants */
+  .card-elevated {
+    @apply bg-card border border-card-border rounded-lg p-6
+           shadow-lg hover:shadow-xl transition-all duration-300;
+  }
+  
+  .card-simple {
+    @apply bg-card border border-card-border rounded-lg p-6;
+  }
+
+  /* Input Styles */
+  .input-field {
+    @apply w-full px-4 py-3 border border-input rounded-lg
+           focus:outline-none focus:ring-2 focus:ring-ring
+           transition-all duration-200;
+  }
+
+  /* Gradient Backgrounds */
+  .bg-gradient-primary {
+    background: var(--gradient-primary);
+  }
+  
+  .bg-gradient-accent {
+    background: var(--gradient-accent);
+  }
+  
+  .bg-gradient-soft {
+    background: var(--gradient-soft);
+  }
+
+  /* Animation Classes */
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.5s ease-out;
+  }
+  
+  .animate-scale-in {
+    animation: scaleIn 0.3s ease-out;
+  }
+
+  /* Hover Effects */
+  .hover-lift {
+    @apply transition-transform duration-300 hover:-translate-y-1;
+  }
+  
+  .hover-glow {
+    @apply transition-all duration-300;
+  }
+  
+  .hover-glow:hover {
+    box-shadow: var(--shadow-primary);
+  }
+}
+
+@layer utilities {
+  /* Custom Utilities */
+  .text-gradient-primary {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .shadow-custom {
+    box-shadow: var(--shadow-soft);
+  }
+  
+  .shadow-custom-md {
+    box-shadow: var(--shadow-medium);
+  }
+  
+  .shadow-custom-lg {
+    box-shadow: var(--shadow-large);
+  }
+}
+
+/* Keyframes */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
