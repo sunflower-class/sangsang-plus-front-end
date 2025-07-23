@@ -1,37 +1,33 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: frontend
-  labels:
-    app: frontend
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: frontend
-  template:
-    metadata:
-      labels:
-        app: frontend
-    spec:
-      containers:
-        - name: frontend
-          image: chldlsrb1000/frontend:latest
-          ports:
-            - containerPort: 80
-
----
-
+# --- Frontend Service ---
 apiVersion: v1
 kind: Service
 metadata:
   name: frontend-svc
-  labels:
-    app: frontend
 spec:
-  type: ClusterIP # 클러스터 내부에서만 접근하므로 ClusterIP 사용
+  type: ClusterIP  # LoadBalancer가 아닌 ClusterIP로 변경
   ports:
     - port: 80
       targetPort: 80
   selector:
     app: frontend
+
+---
+
+# --- Ingress Rule ---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sangsang-plus-ingress
+spec:
+  ingressClassName: nginx 
+  rules:
+  - host: sangsang-plus.com  # 사용할 도메인
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-svc  # 연결할 서비스 이름
+            port:
+              number: 80

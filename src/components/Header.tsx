@@ -9,6 +9,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Sparkles, User, LogOut, Plus, HelpCircle, Home } from 'lucide-react';
+import logo from '@/assets/images/logo.png';
+
 
 const Header = () => {
   const { user, logout } = useAuth();
@@ -21,9 +23,7 @@ const Header = () => {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <Link to="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
-          <div className="flex items-center justify-center w-8 h-8 bg-gradient-primary rounded-lg">
-            <Sparkles className="h-5 w-5 text-white" />
-          </div>
+          <img src={logo} alt="상상더하기 로고" className="h-12 w-12" />
           <span className="text-xl font-bold text-gradient-primary">상상더하기</span>
         </Link>
 

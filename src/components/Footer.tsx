@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
-
+import logo from '@/assets/images/logo.png';
 const Footer = () => {
   return (
     <footer className="bg-background-soft border-t border-border">
@@ -10,9 +10,7 @@ const Footer = () => {
           {/* Company Info */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <div className="flex items-center justify-center w-8 h-8 bg-gradient-primary rounded-lg">
-                <Sparkles className="h-5 w-5 text-white" />
-              </div>
+              <img src={logo} alt="상상더하기 로고" className="h-12 w-12" />
               <span className="text-lg font-bold text-gradient-primary">상상더하기</span>
             </div>
             <p className="text-muted-foreground text-sm">
@@ -71,11 +69,8 @@ const Footer = () => {
 
         <div className="border-t border-border mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-muted-foreground text-sm">
-            © 2024 상상더하기. All rights reserved.
+            © 2025 상상더하기. All rights reserved.
           </p>
-          <div className="flex space-x-4 mt-4 md:mt-0">
-            <span className="text-muted-foreground text-sm">Made with ❤️ in Korea</span>
-          </div>
         </div>
       </div>
     </footer>
