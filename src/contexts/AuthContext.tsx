@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import userService from '@/apis/userService';
 
 interface User {
   id: string;
@@ -29,7 +30,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // 로컬 스토리지에서 사용자 정보 확인
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
       setUser(JSON.parse(savedUser));
@@ -40,12 +40,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     try {
-      // 실제 구현에서는 API 호출
-      // 지금은 더미 데이터로 시뮬레이션
-      if (email && password) {
-        const userData = { id: '1', email, name: email.split('@')[0] };
+      const response = await userService.login({ email, password });
+      if (response && response.id) { // 백엔드 응답에 id 필드가 있다면 성공으로 간주
+        const userData = { id: response.id, email: response.email, name: response.name };
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
+        // 토큰도 저장해야 한다면 여기에 추가 (예: localStorage.setItem('token', response.token);)
         return true;
       }
       return false;
@@ -60,15 +60,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signup = async (email: string, password: string, name: string): Promise<boolean> => {
     setIsLoading(true);
     try {
-      // 실제 구현에서는 API 호출
-      // 지금은 더미 데이터로 시뮬레이션
-      if (email && password && name) {
-        const userData = { id: Date.now().toString(), email, name };
-        setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData));
-        return true;
-      }
-      return false;
+      await userService.signUp({ email, password, name });
+      // 회원가입 성공 후 바로 로그인 처리 또는 로그인 페이지로 리다이렉트
+      // 여기서는 성공만 반환하고 Login.tsx에서 navigate하도록 합니다.
+      return true;
     } catch (error) {
       console.error('Signup error:', error);
       return false;
@@ -80,6 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
+    // localStorage.removeItem('token'); // 토큰도 삭제해야 한다면 추가
   };
 
   return (

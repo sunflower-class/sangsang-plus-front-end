@@ -1,55 +1,14 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/form/button';
+import { Input } from '@/components/ui/form/input';
+import { Label } from '@/components/ui/form/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/layout/card';
 import { Sparkles, Mail, Lock, User, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { useSignup } from '@/hooks/useSignup';
 
 const Signup = () => {
-  const { signup } = useAuth();
-  const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-  });
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (formData.password !== formData.confirmPassword) {
-      toast.error('비밀번호가 일치하지 않습니다.');
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const success = await signup(formData.email, formData.password, formData.name);
-      if (success) {
-        toast.success('회원가입이 완료되었습니다!');
-        navigate('/dashboard');
-      } else {
-        toast.error('회원가입 중 오류가 발생했습니다.');
-      }
-    } catch (error) {
-      toast.error('회원가입 중 오류가 발생했습니다.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-  };
+  const { isLoading, formData, handleSubmit, handleChange } = useSignup();
 
   return (
     <div className="min-h-screen bg-gradient-soft flex items-center justify-center p-4">

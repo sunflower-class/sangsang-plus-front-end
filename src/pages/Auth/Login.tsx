@@ -1,47 +1,14 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/form/button';
+import { Input } from '@/components/ui/form/input';
+import { Label } from '@/components/ui/form/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/layout/card';
 import { Sparkles, Mail, Lock, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { useLogin } from '@/hooks/useLogin';
 
 const Login = () => {
-  const { login } = useAuth();
-  const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      const success = await login(formData.email, formData.password);
-      if (success) {
-        toast.success('로그인되었습니다!');
-        navigate('/dashboard');
-      } else {
-        toast.error('이메일 또는 비밀번호가 올바르지 않습니다.');
-      }
-    } catch (error) {
-      toast.error('로그인 중 오류가 발생했습니다.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-  };
+  const { isLoading, formData, handleSubmit, handleChange } = useLogin();
 
   return (
     <div className="min-h-screen bg-gradient-soft flex items-center justify-center p-4">

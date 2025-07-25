@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/form/button';
+import { Input } from '@/components/ui/form/input';
+import { Label } from '@/components/ui/form/label';
+import { Textarea } from '@/components/ui/form/textarea';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/layout/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/form/select';
+import { Badge } from '@/components/ui/data-display/badge';
+import { Progress } from '@/components/ui/feedback/progress';
 import { 
   Sparkles, 
   Upload, 
@@ -19,6 +19,7 @@ import {
   Image as ImageIcon
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { generateHTML } from '../../apis/htmlGenerate.js';
 
 const Generate = () => {
   const navigate = useNavigate();
@@ -77,28 +78,37 @@ const Generate = () => {
 
     setIsGenerating(true);
     setCurrentStep(2);
-    
-    // 시뮬레이션된 생성 과정
-    const steps = [
-      { message: 'AI가 상품 정보를 분석하고 있습니다...', progress: 20 },
-      { message: '텍스트 블록을 생성하고 있습니다...', progress: 40 },
-      { message: 'HTML 구조를 설계하고 있습니다...', progress: 60 },
-      { message: '이미지를 최적화하고 있습니다...', progress: 80 },
-      { message: '최종 검토 및 완성 중...', progress: 100 },
-    ];
+    setGenerationStatus('AI가 상품 정보를 분석하고 있습니다...');
+    setGenerationProgress(20);
 
-    for (const step of steps) {
-      setGenerationStatus(step.message);
-      setGenerationProgress(step.progress);
-      await new Promise(resolve => setTimeout(resolve, 1500));
+    try {
+      const requestData = { product_data: formData.productName };
+
+      const response = await generateHTML(requestData);
+
+      setGenerationStatus('HTML 생성이 완료되었습니다.');
+      setGenerationProgress(100);
+      
+      // 에디터 페이지로 생성된 HTML과 함께 이동
+      if (response && response.data && response.data.html_list && response.data.html_list.length > 0) {
+        const processedHtml = response.data.html_list.map((htmlBlock, index) => {
+          // 에디터가 블록을 인식하고 편집할 수 있도록 section 태그와 고유 ID를 추가합니다.
+          return `<section id="block-${index}">${htmlBlock}</section>`;
+        }).join('\n');
+
+        navigate('/editor/new-page', { state: { generatedHtml: processedHtml } });
+        toast.success('상세페이지가 성공적으로 생성되었습니다!');
+      } else {
+        toast.error('생성된 HTML이 없거나 형식이 올바르지 않습니다.');
+        setCurrentStep(1);
+      }
+
+    } catch (error) {
+      console.error('Error generating HTML:', error);
+      toast.error('HTML 생성 중 오류가 발생했습니다.');
+      setIsGenerating(false);
+      setCurrentStep(1);
     }
-
-    // 생성 완료
-    setCurrentStep(3);
-    setTimeout(() => {
-      toast.success('상세페이지가 성공적으로 생성되었습니다!');
-      navigate('/editor/new-page');
-    }, 1000);
   };
 
   const renderStepIndicator = () => (

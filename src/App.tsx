@@ -1,20 +1,20 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/feedback/toaster";
+import { Toaster as Sonner } from "@/components/ui/feedback/sonner";
+import { TooltipProvider } from "@/components/ui/overlay/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
-import Index from "./pages/Index";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import Dashboard from "./pages/Dashboard";
-import Generate from "./pages/Generate";
-import Editor from "./pages/Editor";
-import QnA from "./pages/QnA";
-import Profile from "./pages/Profile";
-import NotFound from "./pages/NotFound";
+import Index from "./pages/Root/Index";
+import Login from "./pages/Auth/Login";
+import Signup from "./pages/Auth/Signup";
+import Dashboard from "./pages/Dashboard/Dashboard";
+import Generate from "./pages/Generate/Generate";
+import Editor from "./pages/Editor/Editor";
+import QnA from "./pages/QnA/QnA";
+import Profile from "./pages/Profile/Profile";
+import NotFound from "./pages/NotFound/NotFound";
 
 const queryClient = new QueryClient();
 
