@@ -18,8 +18,8 @@ export const useSignup = () => {
   };
 
   const validatePassword = (password: string) => {
-    /** 8~16자 영문, 숫자, 특수문자를 최소 한 글자씩 포함 */
-    return /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,16}$/.test(password);
+    /** 8~16자 영문(소문자, 대문자 각각), 숫자, 특수문자를 각각 하나 이상 포함 */
+    return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,16}$/.test(password);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -31,7 +31,7 @@ export const useSignup = () => {
     }
 
     if (!validatePassword(formData.password)) {
-      toast.error('비밀번호는 8~16자의 영문, 숫자, 특수문자를 모두 포함해야 합니다.');
+      toast.error('비밀번호는 8~16자의 영문 대문자, 소문자, 숫자, 특수문자를 각각 하나 이상 포함해야 합니다.');
       return;
     }
 

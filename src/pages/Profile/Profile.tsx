@@ -17,9 +17,10 @@ import {
   Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import userService from '@/apis/userService';
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth(); // refreshUser 함수를 가져와서 사용자 정보 업데이트 후 AuthContext를 갱신합니다.
   const [isLoading, setIsLoading] = useState(false);
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
@@ -36,10 +37,17 @@ const Profile = () => {
     setIsLoading(true);
 
     try {
-      // 실제 구현에서는 API 호출
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!user?.id) {
+        toast.error('사용자 ID를 찾을 수 없습니다.');
+        return;
+      }
+      // 이름
+      await userService.updateUserName(user.id, profileData.name);
+      // AuthContext의 user 정보 갱신
+      await refreshUser();
       toast.success('프로필이 업데이트되었습니다.');
     } catch (error) {
+      console.error('프로필 업데이트 중 오류 발생:', error);
       toast.error('프로필 업데이트 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
@@ -54,19 +62,26 @@ const Profile = () => {
       return;
     }
 
-    if (passwordData.newPassword.length < 6) {
-      toast.error('비밀번호는 최소 6자 이상이어야 합니다.');
+    // 비밀번호 유효성 검사: 8자 이상, 숫자, 소문자, 대문자, 특수문자를 각각 하나 이상 포함 (백엔드 스키마와 일치)
+    const passwordRegex = /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&+=])(?=\S+$).{8,}$/;
+    if (!passwordRegex.test(passwordData.newPassword)) {
+      toast.error('비밀번호는 8자 이상이어야 하며, 숫자, 소문자, 대문자, 특수문자를 각각 하나 이상 포함해야 합니다.');
       return;
     }
 
     setIsLoading(true);
 
     try {
-      // 실제 구현에서는 API 호출
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!user?.id) {
+        toast.error('사용자 ID를 찾을 수 없습니다.');
+        return;
+      }
+      // 비밀번호 변경 API 호출
+      await userService.updateUserPassword(user.id, passwordData.newPassword);
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
       toast.success('비밀번호가 변경되었습니다.');
     } catch (error) {
+      console.error('비밀번호 변경 중 오류 발생:', error);
       toast.error('비밀번호 변경 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
@@ -144,9 +159,8 @@ const Profile = () => {
                             id="email"
                             type="email"
                             value={profileData.email}
-                            onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
                             className="pl-10"
-                            placeholder="이메일을 입력하세요"
+                            readOnly // 이메일 수정 불가능
                           />
                         </div>
                       </div>

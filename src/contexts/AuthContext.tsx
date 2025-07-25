@@ -13,6 +13,7 @@ interface AuthContextType {
   signup: (email: string, password: string, name: string) => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
+  refreshUser: () => Promise<void>; // refreshUser 함수 추가
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,16 +38,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(false);
   }, []);
 
+  const refreshUser = async () => {
+    if (user?.email) {
+      try {
+        const fullUserData = await userService.getUserByEmail(user.email);
+        if (fullUserData) {
+          setUser(fullUserData);
+          localStorage.setItem('user', JSON.stringify(fullUserData));
+        }
+      } catch (error) {
+        console.error('사용자 정보 갱신 실패:', error);
+      }
+    }
+  };
+
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     try {
-      const response = await userService.login({ email, password });
-      if (response && response.id) { // 백엔드 응답에 id 필드가 있다면 성공으로 간주
-        const userData = { id: response.id, email: response.email, name: response.name };
-        setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData));
-        // 토큰도 저장해야 한다면 여기에 추가 (예: localStorage.setItem('token', response.token);)
-        return true;
+      const authResponse = await userService.login({ email, password });
+      if (authResponse && authResponse.id) {
+        // 인증 성공 후, 이메일로 사용자 상세 정보 조회
+        const fullUserData = await userService.getUserByEmail(email);
+        if (fullUserData) {
+          setUser(fullUserData);
+          localStorage.setItem('user', JSON.stringify(fullUserData));
+          return true;
+        }
       }
       return false;
     } catch (error) {
@@ -79,7 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, login, signup, logout, isLoading, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
