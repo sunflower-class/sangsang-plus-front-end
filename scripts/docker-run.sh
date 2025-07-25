@@ -6,7 +6,7 @@ NETWORK="docker_default" # 도커 네트워크 이름(kafka docker compose 경�
 # 사용자명 인자 체크
 if [ -z "$1" ]; then
   echo "❌ Docker Hub 사용자명과 서비스이름을 인자로 입력해주세요."
-  echo "예시: bash ./scripts/docker-run.sh chldlsrb1000"
+  echo "예시: bash ./scripts/docker-run.sh lmo2914"
   exit 1
 fi
 
@@ -31,7 +31,7 @@ docker rm -f frontend 2>/dev/null
 
 # 도커 실행
 docker run -d --name frontend \
-  -p "80:80" \
+  -p "8080:80" \
   --network "$NETWORK" \
   "$TAG"
 

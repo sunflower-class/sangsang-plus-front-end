@@ -1,58 +1,51 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import { VITE_API_URL } from './env/env'
+import { Toaster } from "@/components/ui/feedback/toaster";
+import { Toaster as Sonner } from "@/components/ui/feedback/sonner";
+import { TooltipProvider } from "@/components/ui/overlay/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import Header from "./components/Header";
+import Footer from "./components/Footer";
+import Index from "./pages/Root/Index";
+import Login from "./pages/Auth/Login";
+import Signup from "./pages/Auth/Signup";
+import Dashboard from "./pages/Dashboard/Dashboard";
+import Generate from "./pages/Generate/Generate";
+import Editor from "./pages/Editor/Editor";
+import QnA from "./pages/QnA/QnA";
+import Profile from "./pages/Profile/Profile";
+import NotFound from "./pages/NotFound/NotFound";
 
-function App() {
-  const [count, setCount] = useState(0)
+const queryClient = new QueryClient();
 
-  const handleSpringBootApiClick = async () => {
-    const res = await fetch(VITE_API_URL + '/demo/message?message=Hello', { method: 'GET' })
-    console.log('Response:', res)
-  }
-  const handlePythonApiClick = async () => {
-    const res = await fetch(VITE_API_URL + '/python/message', { 
-      method: 'POST', 
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ message: 'Hello from React' })
-    })
-    const data = await res.json()
-    console.log('result:', data)
-  }
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <AuthProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <div className="min-h-screen flex flex-col">
+            <Header />
+            <main className="flex-1">
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/generate" element={<Generate />} />
+                <Route path="/editor/:pageId" element={<Editor />} />
+                <Route path="/qna" element={<QnA />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </main>
+            <Footer />
+          </div>
+        </BrowserRouter>
+      </AuthProvider>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <button onClick={handleSpringBootApiClick}>
-          spring boot api call
-        </button>
-        <button onClick={handlePythonApiClick}>
-          python api call
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
-
-export default App
+export default App;
