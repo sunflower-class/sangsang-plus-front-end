@@ -6,7 +6,7 @@ const USER_API_URL = `${VITE_API_URL}/users`;
 
 /** 회원가입 요청 */
 export const signUp = async (user) => {
-  console.log("Attempting to sign up with user data:", user);
+  console.log("Attempting to sign up with user data:", { ...user, password: '********' });
   try {
     const response = await axios.post(USER_API_URL, user);
     console.log("회원가입 성공:", response.data);
@@ -69,10 +69,24 @@ export const updateUserPassword = async (id, newPassword) => {
   }
 };
 
+/** 사용자 삭제 */
+export const deleteUser = async (id) => {
+  console.log(`사용자 ID ${id} 삭제 시도:`);
+  try {
+    const response = await axios.delete(`${USER_API_URL}/${id}`);
+    console.log("사용자 삭제 성공:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("사용자 삭제 실패:", error.response ? error.response.data : error.message);
+    throw error;
+  }
+};
+
 export default {
   signUp,
   login,
   getUserByEmail,
   updateUserName,
   updateUserPassword,
+  deleteUser,
 };
