@@ -15,6 +15,7 @@ import Editor from "./pages/Editor/Editor";
 import QnA from "./pages/QnA/QnA";
 import Profile from "./pages/Profile/Profile";
 import NotFound from "./pages/NotFound/NotFound";
+import ProtectedRoute from "./routes/ProtectedRoute"; // Import ProtectedRoute
 
 const queryClient = new QueryClient();
 
@@ -32,11 +33,16 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/generate" element={<Generate />} />
-                <Route path="/editor/:pageId" element={<Editor />} />
-                <Route path="/qna" element={<QnA />} />
-                <Route path="/profile" element={<Profile />} />
+                
+                {/* Protected Routes */}
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/generate" element={<Generate />} />
+                  <Route path="/editor/:pageId" element={<Editor />} />
+                  <Route path="/qna" element={<QnA />} />
+                  <Route path="/profile" element={<Profile />} />
+                </Route>
+
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>

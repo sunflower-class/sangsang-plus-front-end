@@ -18,9 +18,12 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import userService from '@/apis/userService';
+import ConfirmationDialog from '@/components/ui/overlay/confirmation-dialog';
+import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
-  const { user, refreshUser } = useAuth(); // refreshUser 함수를 가져와서 사용자 정보 업데이트 후 AuthContext를 갱신합니다.
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
@@ -32,37 +35,56 @@ const Profile = () => {
     confirmPassword: '',
   });
 
-  const handleProfileUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
+  const handleProfileUpdate = async () => {
+    setIsLoading(true);
     try {
       if (!user?.id) {
         toast.error('사용자 ID를 찾을 수 없습니다.');
         return;
       }
-      // 이름
       await userService.updateUserName(user.id, profileData.name);
-      // AuthContext의 user 정보 갱신
-      await refreshUser();
-      toast.success('프로필이 업데이트되었습니다.');
+      toast.success('프로필이 업데이트되었습니다. 다시 로그인해주세요.');
+      logout();
+      navigate('/login');
     } catch (error) {
       console.error('프로필 업데이트 중 오류 발생:', error);
       toast.error('프로필 업데이트 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
+      setIsProfileModalOpen(false);
     }
   };
 
-  const handlePasswordChange = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleDeleteUser = async () => {
+    setIsLoading(true);
+    try {
+      if (!user?.id) {
+        toast.error('사용자 ID를 찾을 수 없습니다.');
+        return;
+      }
+      await userService.deleteUser(user.id);
+      toast.success('회원 탈퇴가 완료되었습니다.');
+      logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('회원 탈퇴 중 오류 발생:', error);
+      toast.error('회원 탈퇴 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+      setIsDeleteModalOpen(false);
+    }
+  };
+
+  const handlePasswordChange = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast.error('새 비밀번호가 일치하지 않습니다.');
       return;
     }
 
-    // 비밀번호 유효성 검사: 8자 이상, 숫자, 소문자, 대문자, 특수문자를 각각 하나 이상 포함 (백엔드 스키마와 일치)
     const passwordRegex = /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&+=])(?=\S+$).{8,}$/;
     if (!passwordRegex.test(passwordData.newPassword)) {
       toast.error('비밀번호는 8자 이상이어야 하며, 숫자, 소문자, 대문자, 특수문자를 각각 하나 이상 포함해야 합니다.');
@@ -70,21 +92,21 @@ const Profile = () => {
     }
 
     setIsLoading(true);
-
     try {
       if (!user?.id) {
         toast.error('사용자 ID를 찾을 수 없습니다.');
         return;
       }
-      // 비밀번호 변경 API 호출
       await userService.updateUserPassword(user.id, passwordData.newPassword);
-      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      toast.success('비밀번호가 변경되었습니다.');
+      toast.success('비밀번호가 변경되었습니다. 다시 로그인해주세요.');
+      logout();
+      navigate('/login');
     } catch (error) {
       console.error('비밀번호 변경 중 오류 발생:', error);
       toast.error('비밀번호 변경 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
+      setIsPasswordModalOpen(false);
     }
   };
 
@@ -135,7 +157,7 @@ const Profile = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handleProfileUpdate} className="space-y-6">
+                  <form onSubmit={(e) => { e.preventDefault(); setIsProfileModalOpen(true); }} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <Label htmlFor="name">이름</Label>
@@ -192,7 +214,7 @@ const Profile = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handlePasswordChange} className="space-y-6">
+                  <form onSubmit={(e) => { e.preventDefault(); setIsPasswordModalOpen(true); }} className="space-y-6">
                     <div className="space-y-2">
                       <Label htmlFor="currentPassword">현재 비밀번호</Label>
                       <div className="relative">
@@ -347,8 +369,37 @@ const Profile = () => {
                   </div>
                 </CardContent>
               </Card>
+              <div className="text-right mt-4">
+                <Button variant="link" className="text-xs text-muted-foreground text-red-400" onClick={() => setIsDeleteModalOpen(true)}>
+                  회원 탈퇴
+                </Button>
+              </div>
             </TabsContent>
           </Tabs>
+
+          <ConfirmationDialog
+            open={isProfileModalOpen}
+            onOpenChange={setIsProfileModalOpen}
+            onConfirm={handleProfileUpdate}
+            title="프로필 변경 확인"
+            description="프로필을 변경하면 다시 로그인해야 합니다. 계속하시겠습니까?"
+          />
+
+          <ConfirmationDialog
+            open={isPasswordModalOpen}
+            onOpenChange={setIsPasswordModalOpen}
+            onConfirm={handlePasswordChange}
+            title="비밀번호 변경 확인"
+            description="비밀번호를 변경하면 다시 로그인해야 합니다. 계속하시겠습니까?"
+          />
+
+          <ConfirmationDialog
+            open={isDeleteModalOpen}
+            onOpenChange={setIsDeleteModalOpen}
+            onConfirm={handleDeleteUser}
+            title="회원 탈퇴 확인"
+            description="정말로 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다."
+          />
         </div>
       </div>
     </div>
