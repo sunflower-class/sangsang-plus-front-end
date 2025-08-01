@@ -16,6 +16,7 @@ import QnA from "./pages/QnA/QnA";
 import Profile from "./pages/Profile/Profile";
 import NotFound from "./pages/NotFound/NotFound";
 import ProtectedRoute from "./routes/ProtectedRoute"; // Import ProtectedRoute
+import AdminDashboard from "./pages/Admin/AdminDashboard";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,11 @@ const App = () => (
                 </Route>
 
                 <Route path="*" element={<NotFound />} />
+
+                {/* Admin Protected Routes */}
+                <Route element={<ProtectedRoute adminOnly={true} />}>
+                  <Route path="/sangsangplus-admin-dashboard-portal" element={<AdminDashboard />} />
+                </Route>
               </Routes>
             </main>
             <Footer />

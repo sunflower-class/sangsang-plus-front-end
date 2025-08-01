@@ -1,8 +1,21 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
 import logo from '@/assets/images/logo.png';
 const Footer = () => {
+  const location = useLocation();
+  const isAdminPage = location.pathname.startsWith('/sangsangplus-admin-dashboard-portal');
+
+  if (isAdminPage) {
+    return (
+      <footer className="bg-background-soft border-t border-border py-4">
+        <div className="container mx-auto px-4 text-center text-muted-foreground text-sm">
+          © 2025 상상더하기 관리자 페이지. All rights reserved.
+        </div>
+      </footer>
+    );
+  }
+
   return (
     <footer className="bg-background-soft border-t border-border">
       <div className="container mx-auto px-4 py-12">
