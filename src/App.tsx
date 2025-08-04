@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/overlay/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
-import Header from "./components/Header";
+import Header from "./components/ImprovedHeader";
 import Footer from "./components/Footer";
 import Index from "./pages/Root/Index";
 import Login from "./pages/Auth/Login";
@@ -14,6 +14,8 @@ import Generate from "./pages/Generate/Generate";
 import Editor from "./pages/Editor/Editor";
 import QnA from "./pages/QnA/QnA";
 import Profile from "./pages/Profile/Profile";
+import ReviewAnalysis from "./pages/ReviewAnalysis/ReviewAnalysisInput";
+import ReviewAnalysisResult from "./pages/ReviewAnalysis/ReviewAnalysisResult";
 import NotFound from "./pages/NotFound/NotFound";
 import ProtectedRoute from "./routes/ProtectedRoute"; // Import ProtectedRoute
 import AdminDashboard from "./pages/Admin/AdminDashboard";
@@ -41,6 +43,8 @@ const App = () => (
                   <Route path="/generate" element={<Generate />} />
                   <Route path="/editor/:pageId" element={<Editor />} />
                   <Route path="/qna" element={<QnA />} />
+                  <Route path="/review-analysis" element={<ReviewAnalysis />} />
+                  <Route path="/review-analysis-result" element={<ReviewAnalysisResult />} />
                   <Route path="/profile" element={<Profile />} />
                 </Route>
 
