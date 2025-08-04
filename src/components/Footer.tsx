@@ -1,8 +1,20 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Sparkles } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 import logo from '@/assets/images/logo.png';
 const Footer = () => {
+  const location = useLocation();
+  const isAdminPage = location.pathname.startsWith('/sangsangplus-admin-dashboard-portal');
+
+  if (isAdminPage) {
+    return (
+      <footer className="bg-background-soft border-t border-border py-4">
+        <div className="container mx-auto px-4 text-center text-muted-foreground text-sm">
+          © 2025 상상더하기 관리자 페이지. All rights reserved.
+        </div>
+      </footer>
+    );
+  }
+
   return (
     <footer className="bg-background-soft border-t border-border">
       <div className="container mx-auto px-4 py-12">
@@ -54,15 +66,15 @@ const Footer = () => {
           <div className="space-y-4">
             <h3 className="font-semibold text-foreground">정책</h3>
             <div className="space-y-2">
-              <a href="#" className="block text-muted-foreground hover:text-primary transition-colors text-sm">
+              <Link to="/terms-of-service" className="block text-muted-foreground hover:text-primary transition-colors text-sm">
                 이용약관
-              </a>
-              <a href="#" className="block text-muted-foreground hover:text-primary transition-colors text-sm">
+              </Link>
+              <Link to="/privacy-policy" className="block text-muted-foreground hover:text-primary transition-colors text-sm">
                 개인정보처리방침
-              </a>
-              <a href="#" className="block text-muted-foreground hover:text-primary transition-colors text-sm">
+              </Link>
+              <Link to="/cookie-policy" className="block text-muted-foreground hover:text-primary transition-colors text-sm">
                 쿠키 정책
-              </a>
+              </Link>
             </div>
           </div>
         </div>

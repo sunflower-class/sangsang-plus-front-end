@@ -22,6 +22,7 @@ export const login = async (credentials) => {
   console.log("로그인 시도:", credentials);
   try {
     const response = await axios.post(`${USER_API_URL}/authenticate`, credentials);
+    localStorage.setItem('user_id', response.data.id);
     console.log("로그인 성공:", response.data);
     return response.data;
   } catch (error) {

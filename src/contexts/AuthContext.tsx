@@ -5,6 +5,7 @@ interface User {
   id: string;
   email: string;
   name: string;
+  isAdmin?: boolean; // 관리자 여부 추가
 }
 
 interface AuthContextType {
