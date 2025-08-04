@@ -34,7 +34,7 @@ import {
 } from "lucide-react";
 import Chatbot from "@/components/chatbot/Chatbot";
 import { toast } from "sonner";
-import { getRagQnaList, createBoardPost, getPendingQnas } from "@/apis/questionService";
+import { getRagQnaList, summarizeAndSubmitPost, getPendingQnas } from "@/apis/questionService";
 
 interface Question {
   id: string;
@@ -44,7 +44,7 @@ interface Question {
   authorId: string;
   createdAt: string;
   replies: Reply[];
-  status: "open" | "answered" | "closed";
+  status: "open" | "answered" | "closed" | "pending";
 }
 
 interface Reply {
@@ -111,11 +111,11 @@ const QnA = () => {
             (item: any) => ({
               id: item.id,
               title: item.question,
-              content: item.metadata?.original_content || "내용 없음", // Assuming metadata might contain original content
+              content: item.metadata?.original_content || "내용 없음",
               author: item.metadata?.author || "사용자",
               authorId: item.metadata?.author_id || "user",
               createdAt: item.metadata?.created_at || new Date().toISOString().split("T")[0],
-              status: "open", // Set status to 'open' for pending questions
+              status: "pending", // 검수 대기 중인 질문은 'pending' 상태로 표시
               replies: [], // No replies for pending questions
             })
           );
@@ -162,29 +162,22 @@ const QnA = () => {
         toast.error("유저 정보가 없습니다. 다시 로그인 해주세요.");
         return;
       }
-      await createBoardPost({
-        title: newQuestion.title,
-        content: newQuestion.content,
-        user_id: String(userId), // ← 반드시 문자열로 변환
+      
+      // 제목과 내용을 합쳐서 검수 대기 목록에 추가
+      const combinedText = `제목: ${newQuestion.title}\n\n내용: ${newQuestion.content}`;
+      await summarizeAndSubmitPost({
+        text_content: combinedText,
+        tags: ["사용자질문", "Q&A"]
       });
 
       setNewQuestion({ title: "", content: "" });
       setIsCreateDialogOpen(false);
-      toast.success("질문이 성공적으로 등록되었습니다.");
+      toast.success("질문이 성공적으로 등록되었습니다. 관리자 검수를 기다려주세요.");
       fetchQuestions(); // Re-fetch the questions list
     } catch (error) {
       toast.error("질문 등록에 실패했습니다.");
       console.error("Failed to create question:", error);
     }
-  };
-
-  const handleNewQuestionFromChatbot = (question: string) => {
-    setNewQuestion({
-      title: question,
-      content: "챗봇이 답변하지 못한 질문입니다.",
-    });
-    setIsCreateDialogOpen(true);
-    setIsChatbotOpen(false);
   };
 
   const handleAddReply = (questionId: string) => {
@@ -237,6 +230,8 @@ const QnA = () => {
         );
       case "open":
         return <Badge variant="outline">답변대기</Badge>;
+      case "pending":
+        return <Badge variant="secondary" className="bg-orange-100 text-orange-800 border-orange-200">검수대기</Badge>;
       case "closed":
         return <Badge variant="secondary">종료</Badge>;
       default:
@@ -443,6 +438,19 @@ const QnA = () => {
                     </p>
                   </div>
 
+                  {/* 검수 대기 상태 안내 */}
+                  {selectedQuestion.status === "pending" && (
+                    <div className="bg-orange-50 border border-orange-200 p-4 rounded-lg">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                        <h4 className="font-semibold text-orange-800">검수 대기 중</h4>
+                      </div>
+                      <p className="text-sm text-orange-700">
+                        관리자가 질문을 검토하고 있습니다. 검토가 완료되면 답변이 제공됩니다.
+                      </p>
+                    </div>
+                  )}
+
                   {user && user.id === selectedQuestion.authorId && (
                     <div className="flex space-x-2 pt-4 border-t border-border">
                       <Button
@@ -500,7 +508,7 @@ const QnA = () => {
                   )}
 
                   {/* Reply Form */}
-                  {user && (
+                  {user && selectedQuestion.status !== "pending" && (
                     <div className="space-y-3 pt-4 border-t border-border">
                       <h4 className="font-semibold">답변 작성</h4>
                       <Textarea
@@ -520,7 +528,7 @@ const QnA = () => {
                     </div>
                   )}
 
-                  {!user && (
+                  {!user && selectedQuestion.status !== "pending" && (
                     <div className="text-center py-4 border-t border-border">
                       <p className="text-muted-foreground mb-3">
                         답변을 작성하려면 로그인이 필요합니다
@@ -563,7 +571,7 @@ const QnA = () => {
 
       {/* Chatbot Window */}
       {isChatbotOpen && (
-        <Chatbot onNewQuestion={handleNewQuestionFromChatbot} />
+        <Chatbot />
       )}
     </div>
   );
