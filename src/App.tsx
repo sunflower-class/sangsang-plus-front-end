@@ -19,6 +19,9 @@ import ReviewAnalysisResult from "./pages/ReviewAnalysis/ReviewAnalysisResult";
 import NotFound from "./pages/NotFound/NotFound";
 import ProtectedRoute from "./routes/ProtectedRoute"; // Import ProtectedRoute
 import AdminDashboard from "./pages/Admin/AdminDashboard";
+import TermsOfServicePage from "./pages/Policy/TermsOfServicePage";
+import PrivacyPolicyPage from "./pages/Policy/PrivacyPolicyPage";
+import CookiePolicyPage from "./pages/Policy/CookiePolicyPage";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +39,11 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
+                
+                {/* Policy Pages */}
+                <Route path="/terms-of-service" element={<TermsOfServicePage />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+                <Route path="/cookie-policy" element={<CookiePolicyPage />} />
                 
                 {/* Protected Routes */}
                 <Route element={<ProtectedRoute />}>

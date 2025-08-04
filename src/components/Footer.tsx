@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Sparkles } from 'lucide-react';
 import logo from '@/assets/images/logo.png';
 const Footer = () => {
   const location = useLocation();
@@ -67,15 +66,15 @@ const Footer = () => {
           <div className="space-y-4">
             <h3 className="font-semibold text-foreground">정책</h3>
             <div className="space-y-2">
-              <a href="#" className="block text-muted-foreground hover:text-primary transition-colors text-sm">
+              <Link to="/terms-of-service" className="block text-muted-foreground hover:text-primary transition-colors text-sm">
                 이용약관
-              </a>
-              <a href="#" className="block text-muted-foreground hover:text-primary transition-colors text-sm">
+              </Link>
+              <Link to="/privacy-policy" className="block text-muted-foreground hover:text-primary transition-colors text-sm">
                 개인정보처리방침
-              </a>
-              <a href="#" className="block text-muted-foreground hover:text-primary transition-colors text-sm">
+              </Link>
+              <Link to="/cookie-policy" className="block text-muted-foreground hover:text-primary transition-colors text-sm">
                 쿠키 정책
-              </a>
+              </Link>
             </div>
           </div>
         </div>
