@@ -1,7 +1,7 @@
 import axios from "axios";
-import { VITE_REVIEW_ANALYSIS_URL } from "../env/env";
+import { VITE_REVIEW_URL } from "../env/env";
 
-const API_BASE_URL = VITE_REVIEW_ANALYSIS_URL;
+const API_BASE_URL = VITE_REVIEW_URL;
 
 /**
  * Generic API caller function using axios for review analysis.

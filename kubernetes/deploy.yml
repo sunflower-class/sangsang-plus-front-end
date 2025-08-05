@@ -1,3 +1,56 @@
+# --- Frontend Deployment ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+  labels:
+    app: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: ${username}/frontend:latest  # Docker Hub 이미지
+        ports:
+        - containerPort: 80
+        env:
+        - name: VITE_USER_URL
+          value: "http://user-service:8081/api"
+        - name: VITE_QUESTION_URL
+          value: "http://question-service:5001/management"
+        - name: VITE_REVIEW_URL
+          value: "http://review-service:5002/python/review"
+        - name: VITE_GENERATE_URL
+          value: "http://generate-service:5003"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 30
+
+---
+
 # --- Frontend Service ---
 apiVersion: v1
 kind: Service
@@ -18,6 +71,9 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: sangsang-plus-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
 spec:
   ingressClassName: nginx 
   rules:
