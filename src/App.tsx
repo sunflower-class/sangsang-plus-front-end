@@ -17,7 +17,7 @@ import Profile from "./pages/Profile/Profile";
 import ReviewAnalysis from "./pages/ReviewAnalysis/ReviewAnalysisInput";
 import ReviewAnalysisResult from "./pages/ReviewAnalysis/ReviewAnalysisResult";
 import NotFound from "./pages/NotFound/NotFound";
-import ProtectedRoute from "./routes/ProtectedRoute"; // Import ProtectedRoute
+import ProtectedRoute from "./routes/ProtectedRoute";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import TermsOfServicePage from "./pages/Policy/TermsOfServicePage";
 import PrivacyPolicyPage from "./pages/Policy/PrivacyPolicyPage";

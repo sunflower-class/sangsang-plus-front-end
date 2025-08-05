@@ -1,6 +1,15 @@
 # front-end
 마이크로 서비스를 위한 vite react app 입니다.
 
+## API 엔드포인트
+
+프론트엔드에서 사용하는 마이크로서비스 API들입니다:
+
+- **VITE_USER_URL**: 사용자 관리 서비스 - 회원가입, 로그인, 프로필 관리 등 사용자 관련 기능
+- **VITE_QUESTION_URL**: 질문 관리 서비스 - Q&A, 문의사항, 커뮤니티 질문 등 관리
+- **VITE_REVIEW_URL**: 리뷰 분석 서비스 - 상품 리뷰 분석, 감정 분석, AI 기반 리뷰 처리
+- **VITE_GENERATE_URL**: 콘텐츠 생성 서비스 - AI 기반 콘텐츠 생성, 텍스트 처리 등
+
 # 사전 준비
 - docker: v28.x ('25.7.7 기준 lts)
 - node: v22.x ('25.7.8 기준 lts)

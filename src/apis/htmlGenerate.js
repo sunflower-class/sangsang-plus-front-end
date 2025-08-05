@@ -1,7 +1,7 @@
 import axios from 'axios';
-import { VITE_GENERATE_HTML } from '../env/env';
+import { VITE_GENERATE_URL } from '../env/env';
 
-const API_URL = VITE_GENERATE_HTML;
+const API_URL = VITE_GENERATE_URL;
 
 export const generateHTML = async (data) => {
   try {
