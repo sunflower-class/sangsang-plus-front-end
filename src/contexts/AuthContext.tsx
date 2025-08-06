@@ -1,20 +1,22 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import userService from '@/apis/userService';
+import authService from '@/apis/authService';
+import { initializeAxiosToken, setupAxiosInterceptors } from '@/config/axiosConfig';
 
 interface User {
   id: string;
   email: string;
   name: string;
-  isAdmin?: boolean; // 관리자 여부 추가
+  isAdmin?: boolean;
 }
 
 interface AuthContextType {
   user: User | null;
+  token: string | null;
   login: (email: string, password: string) => Promise<boolean>;
   signup: (email: string, password: string, name: string) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
   isLoading: boolean;
-  refreshUser: () => Promise<void>; // refreshUser 함수 추가
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,42 +31,51 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Axios 인터셉터 설정
+    setupAxiosInterceptors();
+    
+    // 저장된 토큰과 사용자 정보 불러오기
+    const savedToken = localStorage.getItem('jwt_token');
     const savedUser = localStorage.getItem('user');
-    if (savedUser) {
+    
+    if (savedToken && savedUser) {
+      setToken(savedToken);
       setUser(JSON.parse(savedUser));
+      initializeAxiosToken();
+      
+      // 토큰 유효성 검증
+      authService.verifyToken().then(isValid => {
+        if (!isValid) {
+          // 토큰이 유효하지 않으면 로그아웃 처리
+          logout();
+        }
+      });
     }
     setIsLoading(false);
   }, []);
 
   const refreshUser = async () => {
-    if (user?.email) {
-      try {
-        const fullUserData = await userService.getUserByEmail(user.email);
-        if (fullUserData) {
-          setUser(fullUserData);
-          localStorage.setItem('user', JSON.stringify(fullUserData));
-        }
-      } catch (error) {
-        console.error('사용자 정보 갱신 실패:', error);
-      }
+    // JWT 토큰 기반으로는 서버에서 사용자 정보를 가져오는 API가 필요
+    // 현재는 localStorage의 정보 유지
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
     }
   };
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     try {
-      const authResponse = await userService.login({ email, password });
-      if (authResponse && authResponse.id) {
-        // 인증 성공 후, 이메일로 사용자 상세 정보 조회
-        const fullUserData = await userService.getUserByEmail(email);
-        if (fullUserData) {
-          setUser(fullUserData);
-          localStorage.setItem('user', JSON.stringify(fullUserData));
-          return true;
-        }
+      const response = await authService.login({ email, password });
+      if (response.token && response.user) {
+        setToken(response.token);
+        setUser(response.user);
+        localStorage.setItem('user', JSON.stringify(response.user));
+        return true;
       }
       return false;
     } catch (error) {
@@ -78,10 +89,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signup = async (email: string, password: string, name: string): Promise<boolean> => {
     setIsLoading(true);
     try {
-      await userService.signUp({ email, password, name });
-      // 회원가입 성공 후 바로 로그인 처리 또는 로그인 페이지로 리다이렉트
-      // 여기서는 성공만 반환하고 Login.tsx에서 navigate하도록 합니다.
-      return true;
+      const response = await authService.signup({ email, password, name });
+      if (response.token && response.user) {
+        // 회원가입 성공 시 자동 로그인
+        setToken(response.token);
+        setUser(response.user);
+        localStorage.setItem('user', JSON.stringify(response.user));
+        return true;
+      }
+      return false;
     } catch (error) {
       console.error('Signup error:', error);
       return false;
@@ -90,14 +106,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
-    // localStorage.removeItem('token'); // 토큰도 삭제해야 한다면 추가
+  const logout = async () => {
+    try {
+      await authService.logout();
+    } finally {
+      setUser(null);
+      setToken(null);
+      localStorage.removeItem('user');
+      localStorage.removeItem('jwt_token');
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, isLoading, refreshUser }}>
+    <AuthContext.Provider value={{ user, token, login, signup, logout, isLoading, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
