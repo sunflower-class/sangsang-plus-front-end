@@ -23,8 +23,9 @@ RUN yarn install --frozen-lockfile --production=false
 # Copy source code (excluding env files)
 COPY . .
 
-# Create env file with build-time environment variables
-RUN echo "export const API_URL = '${VITE_API_URL}';" > src/env/env.ts && \
+# Create env directory and file with build-time environment variables
+RUN mkdir -p src/env && \
+    echo "export const API_URL = '${VITE_API_URL}';" > src/env/env.ts && \
     echo "export const VITE_GENERATE_URL = '${VITE_GENERATE_URL}';" >> src/env/env.ts && \
     echo "export const VITE_REVIEW_URL = '${VITE_REVIEW_URL}';" >> src/env/env.ts && \
     echo "export const VITE_QUESTION_URL = '${VITE_QUESTION_URL}';" >> src/env/env.ts && \
