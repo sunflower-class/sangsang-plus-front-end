@@ -50,7 +50,7 @@ export const login = async (credentials: LoginRequest): Promise<AuthResponse> =>
  */
 export const signup = async (userData: SignupRequest): Promise<AuthResponse> => {
   try {
-    const response = await axios.post<AuthResponse>(`${AUTH_URL}/signup`, userData);
+    const response = await axios.post<AuthResponse>(`${AUTH_URL}/register`, userData);
     
     // 회원가입 성공 시 토큰 저장 (자동 로그인)
     if (response.data.token) {
