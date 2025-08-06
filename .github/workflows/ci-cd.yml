@@ -32,8 +32,7 @@ jobs:
       with:
         images: ${{ env.DOCKER_IMAGE }}
         tags: |
-          type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-          type=sha,prefix={{branch}}-
+          type=raw,value=latest
 
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
@@ -75,8 +74,11 @@ jobs:
 
     - name: Deploy to sangsangplus-frontend namespace
       run: |
-        # Update image tag to latest
-        sed -i "s|image: buildingbite/sangsangplus-frontend:.*|image: buildingbite/sangsangplus-frontend:latest|g" deployment.yaml
+        # Generate build timestamp to force pod restart
+        BUILD_TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+        
+        # Update deployment with new timestamp to force image pull
+        sed -i "s|BUILD_TIMESTAMP_PLACEHOLDER|$BUILD_TIMESTAMP|g" deployment.yaml
         
         # Check if namespace exists, create if it doesn't
         kubectl get namespace sangsangplus-frontend || kubectl create namespace sangsangplus-frontend
