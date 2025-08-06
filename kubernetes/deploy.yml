@@ -2,22 +2,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: frontend-deployment
+  name: sangsang-plus-frontend
   labels:
-    app: frontend
+    app: sangsang-plus-frontend
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: frontend
+      app: sangsang-plus-frontend
   template:
     metadata:
       labels:
-        app: frontend
+        app: sangsang-plus-frontend
     spec:
       containers:
-      - name: frontend
-        image: ${username}/frontend:latest  # Docker Hub 이미지
+      - name: sangsang-plus-frontend
+        image: lmo2914/frontend:latest  # Docker Hub 이미지
         ports:
         - containerPort: 80
         env:
@@ -55,14 +55,14 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: frontend-svc
+  name: sangsang-plus-frontend-svc
 spec:
   type: ClusterIP  # LoadBalancer가 아닌 ClusterIP로 변경
   ports:
     - port: 80
       targetPort: 80
   selector:
-    app: frontend
+    app: sangsang-plus-frontend
 
 ---
 
@@ -84,6 +84,6 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: frontend-svc  # 연결할 서비스 이름
+            name: sangsang-plus-frontend-svc  # 연결할 서비스 이름
             port:
               number: 80
