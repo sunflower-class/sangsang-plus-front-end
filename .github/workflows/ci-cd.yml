@@ -91,21 +91,11 @@ jobs:
       run: |
         # Wait for deployment to be ready
         kubectl wait --for=condition=available --timeout=300s deployment/frontend-service -n sangsangplus-frontend
-        
-        # Get the service endpoint for internal testing
-        SERVICE_IP=$(kubectl get svc frontend-service -n sangsangplus-frontend -o jsonpath='{.spec.clusterIP}')
-        
-        # Port-forward for health check (since it's ClusterIP)
-        kubectl port-forward -n sangsangplus-frontend svc/frontend-service 8080:80 &
-        PF_PID=$!
-        
+
         # Wait for port-forward to be ready
         sleep 10
         
         # Health check via port-forward (check if the main page loads)
-        curl -f http://localhost:8080/ || exit 1
-        
-        # Clean up port-forward
-        kill $PF_PID
+        curl -f https://buildingbite.com/ || exit 1
         
         echo "Deployment successful!"
