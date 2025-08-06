@@ -22,7 +22,7 @@ spec:
         - containerPort: 80
         env:
         - name: CACHE_BUST
-          value: "v1.0.3"
+          value: "BUILD_TIMESTAMP_PLACEHOLDER"
         resources:
           requests:
             memory: "128Mi"
