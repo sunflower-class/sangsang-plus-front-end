@@ -59,6 +59,7 @@ const QnA = () => {
   const { user } = useAuth();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(
@@ -70,6 +71,7 @@ const QnA = () => {
 
   const fetchQuestions = useCallback(async () => {
       setIsLoading(true);
+      setError(null);
       try {
         const [ragResponse, pendingResponse] = await Promise.all([
           getRagQnaList({ limit: 100 }), // Fetch up to 100 Q&As
@@ -126,9 +128,22 @@ const QnA = () => {
         combinedQuestions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
         setQuestions(combinedQuestions);
-      } catch (error) {
-        toast.error("Q&A 목록을 불러오는 데 실패했습니다.");
+      } catch (error: any) {
         console.error("Failed to fetch Q&A list:", error);
+        
+        // 에러 타입에 따라 다른 메시지 표시
+        if (error.code === 'NETWORK_ERROR' || !error.response) {
+          setError("서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.");
+        } else if (error.response?.status >= 500) {
+          setError("서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+        } else if (error.response?.status === 404) {
+          setError("Q&A 서비스를 찾을 수 없습니다.");
+        } else {
+          setError("Q&A 목록을 불러오는 데 실패했습니다.");
+        }
+        
+        // 토스트는 더 간단한 메시지로
+        toast.error("Q&A 데이터를 불러올 수 없습니다.");
       } finally {
         setIsLoading(false);
       }
@@ -336,7 +351,7 @@ const QnA = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Questions List */}
           <div className="lg:col-span-2 space-y-4">
-            {filteredQuestions.map((question) => (
+            {!error && !isLoading && filteredQuestions.map((question) => (
               <Card
                 key={question.id}
                 className="card-simple hover-lift cursor-pointer"
@@ -381,7 +396,28 @@ const QnA = () => {
               </Card>
             ))}
 
-            {filteredQuestions.length === 0 && (
+            {/* 에러 상태 표시 */}
+            {error && (
+              <div className="text-center py-12">
+                <div className="flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mx-auto mb-4">
+                  <HelpCircle className="h-8 w-8 text-red-500" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2 text-red-600">서버 연결 오류</h3>
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                  {error}
+                </p>
+                <Button
+                  onClick={fetchQuestions}
+                  className="btn-primary"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "다시 시도 중..." : "다시 시도"}
+                </Button>
+              </div>
+            )}
+
+            {/* 질문이 없는 경우 (에러가 아닌 경우만) */}
+            {!error && filteredQuestions.length === 0 && !isLoading && (
               <div className="text-center py-12">
                 <div className="flex items-center justify-center w-16 h-16 bg-muted rounded-full mx-auto mb-4">
                   <HelpCircle className="h-8 w-8 text-muted-foreground" />
@@ -400,6 +436,19 @@ const QnA = () => {
                     질문하기
                   </Button>
                 )}
+              </div>
+            )}
+
+            {/* 로딩 상태 표시 */}
+            {isLoading && (
+              <div className="text-center py-12">
+                <div className="flex items-center justify-center w-16 h-16 bg-muted rounded-full mx-auto mb-4 animate-pulse">
+                  <HelpCircle className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">로딩 중...</h3>
+                <p className="text-muted-foreground">
+                  Q&A 목록을 불러오고 있습니다.
+                </p>
               </div>
             )}
           </div>
