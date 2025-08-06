@@ -47,13 +47,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(JSON.parse(savedUser));
       initializeAxiosToken();
       
-      // 토큰 유효성 검증
-      authService.verifyToken().then(isValid => {
-        if (!isValid) {
-          // 토큰이 유효하지 않으면 로그아웃 처리
-          logout();
-        }
-      });
+      // 게이트웨이에서 토큰 검증을 처리하므로 별도 검증 불필요
+      // 실제 API 요청 시 게이트웨이가 토큰 유효성을 확인함
     }
     setIsLoading(false);
   }, []);

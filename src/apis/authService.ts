@@ -170,22 +170,13 @@ export const refreshToken = async (): Promise<string> => {
 };
 
 /**
- * 토큰 검증
+ * 토큰 검증 (게이트웨이에서 처리하므로 로컬 검사만)
  */
 export const verifyToken = async (): Promise<boolean> => {
-  try {
-    const token = localStorage.getItem('jwt_token');
-    if (!token) return false;
-    
-    const response = await axios.get(`${AUTH_URL}/verify`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    
-    return response.status === 200;
-  } catch (error) {
-    console.error("토큰 검증 실패:", error);
-    return false;
-  }
+  // 게이트웨이에서 토큰 검증을 처리하므로 
+  // 로컬에 토큰이 있는지만 확인
+  const token = localStorage.getItem('jwt_token');
+  return token !== null;
 };
 
 export default {
