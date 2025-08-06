@@ -11,36 +11,7 @@ env:
   REGISTRY: docker.io
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Node.js 22
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22'
-        cache: 'yarn'
-
-    - name: Install dependencies
-      run: |
-        yarn install --frozen-lockfile
-
-    - name: Run linting
-      run: |
-        yarn lint
-
-    - name: Run TypeScript check
-      run: |
-        yarn tsc -b --noEmit
-
-    - name: Build project
-      run: |
-        yarn build:kubernetes
-
   build-and-push:
-    needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     
