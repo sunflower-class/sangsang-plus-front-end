@@ -26,6 +26,7 @@ COPY . .
 # Create env directory and file with build-time environment variables
 RUN mkdir -p src/env && \
     echo "export const API_URL = '${VITE_API_URL}';" > src/env/env.ts && \
+    echo "export const VITE_API_URL = '${VITE_API_URL}';" >> src/env/env.ts && \
     echo "export const VITE_GENERATE_URL = '${VITE_GENERATE_URL}';" >> src/env/env.ts && \
     echo "export const VITE_REVIEW_URL = '${VITE_REVIEW_URL}';" >> src/env/env.ts && \
     echo "export const VITE_QUESTION_URL = '${VITE_QUESTION_URL}';" >> src/env/env.ts && \
