@@ -14,6 +14,15 @@ interface SignupRequest {
   name: string;
 }
 
+interface ServerAuthResponse {
+  success: boolean;
+  message: string;
+  token: string;
+  refreshToken: string;
+  user: any; // null일 수 있음
+  expiresIn: number;
+}
+
 interface AuthResponse {
   token: string;
   user: {
@@ -24,21 +33,55 @@ interface AuthResponse {
   };
 }
 
+// JWT 토큰을 디코드하여 사용자 정보 추출
+const decodeJWTPayload = (token: string) => {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+  } catch (error) {
+    console.error('JWT 디코딩 실패:', error);
+    return null;
+  }
+};
+
 /**
  * 로그인 요청
  */
 export const login = async (credentials: LoginRequest): Promise<AuthResponse> => {
   try {
-    const response = await axios.post<AuthResponse>(`${AUTH_URL}/login`, credentials);
+    const response = await axios.post<ServerAuthResponse>(`${AUTH_URL}/login`, credentials);
     
-    // JWT 토큰을 localStorage에 저장
-    if (response.data.token) {
-      localStorage.setItem('jwt_token', response.data.token);
-      // axios 기본 헤더에 토큰 설정
-      axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+    if (!response.data.success) {
+      throw new Error(response.data.message || '로그인 실패');
     }
     
-    return response.data;
+    const { token, refreshToken } = response.data;
+    
+    // JWT 토큰을 localStorage에 저장
+    localStorage.setItem('jwt_token', token);
+    localStorage.setItem('refresh_token', refreshToken);
+    
+    // axios 기본 헤더에 토큰 설정
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    
+    // JWT에서 사용자 정보 추출
+    const payload = decodeJWTPayload(token);
+    if (!payload) {
+      throw new Error('토큰 파싱 실패');
+    }
+    
+    const user = {
+      id: payload.userId || payload.sub,
+      email: payload.email || payload.preferred_username,
+      name: payload.name || payload.preferred_username || payload.email,
+      isAdmin: false // 필요시 role에서 판단
+    };
+    
+    return { token, user };
   } catch (error) {
     console.error("로그인 실패:", error);
     throw error;
@@ -50,15 +93,35 @@ export const login = async (credentials: LoginRequest): Promise<AuthResponse> =>
  */
 export const signup = async (userData: SignupRequest): Promise<AuthResponse> => {
   try {
-    const response = await axios.post<AuthResponse>(`${AUTH_URL}/register`, userData);
+    const response = await axios.post<ServerAuthResponse>(`${AUTH_URL}/register`, userData);
     
-    // 회원가입 성공 시 토큰 저장 (자동 로그인)
-    if (response.data.token) {
-      localStorage.setItem('jwt_token', response.data.token);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+    if (!response.data.success) {
+      throw new Error(response.data.message || '회원가입 실패');
     }
     
-    return response.data;
+    const { token, refreshToken } = response.data;
+    
+    // JWT 토큰을 localStorage에 저장
+    localStorage.setItem('jwt_token', token);
+    localStorage.setItem('refresh_token', refreshToken);
+    
+    // axios 기본 헤더에 토큰 설정
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    
+    // JWT에서 사용자 정보 추출
+    const payload = decodeJWTPayload(token);
+    if (!payload) {
+      throw new Error('토큰 파싱 실패');
+    }
+    
+    const user = {
+      id: payload.userId || payload.sub,
+      email: payload.email || payload.preferred_username,
+      name: payload.name || payload.preferred_username || payload.email,
+      isAdmin: false
+    };
+    
+    return { token, user };
   } catch (error) {
     console.error("회원가입 실패:", error);
     throw error;
@@ -82,6 +145,7 @@ export const logout = async (): Promise<void> => {
   } finally {
     // 로컬 토큰 삭제
     localStorage.removeItem('jwt_token');
+    localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
     delete axios.defaults.headers.common['Authorization'];
   }
