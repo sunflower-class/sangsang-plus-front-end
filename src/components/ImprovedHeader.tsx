@@ -64,39 +64,41 @@ const ImprovedHeader: React.FC = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-1">
-            {navigationItems.map((item) => {
-              const isActive = isActivePath(item.href);
-              return (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  className={`
-                    relative flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
-                    ${isActive 
-                      ? 'bg-primary text-primary-foreground shadow-md' 
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                    }
-                  `}
-                >
-                  <item.icon className="h-4 w-4" />
-                  <span>{item.label}</span>
-                  {item.badge && (
-                    <Badge 
-                      variant="secondary" 
-                      className="ml-1 text-xs px-1.5 py-0.5 bg-orange-100 text-orange-700 border-orange-200"
-                    >
-                      {item.badge}
-                    </Badge>
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
+          {user && (
+            <nav className="hidden md:flex items-center space-x-1">
+              {navigationItems.map((item) => {
+                const isActive = isActivePath(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    className={`
+                      relative flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
+                      ${isActive 
+                        ? 'bg-primary text-primary-foreground shadow-md' 
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                      }
+                    `}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.label}</span>
+                    {item.badge && (
+                      <Badge 
+                        variant="secondary" 
+                        className="ml-1 text-xs px-1.5 py-0.5 bg-orange-100 text-orange-700 border-orange-200"
+                      >
+                        {item.badge}
+                      </Badge>
+                    )}
+                  </Link>
+                );
+              })}
+            </nav>
+          )}
 
           {/* User Actions */}
           <div className="flex items-center space-x-3">
-            {/* Mobile Menu */}
+            {/* Mobile Menu - 항상 표시 */}
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild className="md:hidden">
                 <Button variant="ghost" size="icon" className="relative">
@@ -119,33 +121,35 @@ const ImprovedHeader: React.FC = () => {
                   </Button>
                 </div>
                 
-                <nav className="space-y-2">
-                  {navigationItems.map((item) => {
-                    const isActive = isActivePath(item.href);
-                    return (
-                      <Link
-                        key={item.href}
-                        to={item.href}
-                        onClick={closeMobileMenu}
-                        className={`
-                          flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all
-                          ${isActive 
-                            ? 'bg-primary text-primary-foreground' 
-                            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                          }
-                        `}
-                      >
-                        <item.icon className="h-5 w-5" />
-                        <span>{item.label}</span>
-                        {item.badge && (
-                          <Badge variant="secondary" className="ml-auto text-xs">
-                            {item.badge}
-                          </Badge>
-                        )}
-                      </Link>
-                    );
-                  })}
-                </nav>
+                {user && (
+                  <nav className="space-y-2">
+                    {navigationItems.map((item) => {
+                      const isActive = isActivePath(item.href);
+                      return (
+                        <Link
+                          key={item.href}
+                          to={item.href}
+                          onClick={closeMobileMenu}
+                          className={`
+                            flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all
+                            ${isActive 
+                              ? 'bg-primary text-primary-foreground' 
+                              : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                            }
+                          `}
+                        >
+                          <item.icon className="h-5 w-5" />
+                          <span>{item.label}</span>
+                          {item.badge && (
+                            <Badge variant="secondary" className="ml-auto text-xs">
+                              {item.badge}
+                            </Badge>
+                          )}
+                        </Link>
+                      );
+                    })}
+                  </nav>
+                )}
 
                 {/* Mobile User Actions */}
                 {user ? (
@@ -181,7 +185,7 @@ const ImprovedHeader: React.FC = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="mt-8 pt-6 border-t space-y-2">
+                  <div className="mt-6 pt-4 border-t space-y-2">
                     <Button 
                       variant="ghost" 
                       asChild 

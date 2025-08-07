@@ -62,10 +62,6 @@ const Index = () => {
                         <ArrowRight className="h-5 w-5" />
                       </Link>
                     </Button>
-                    <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-primary h-14 px-8 text-lg">
-                      <PlayCircle className="mr-2 h-5 w-5" />
-                      데모 보기
-                    </Button>
                   </>
                 )}
               </div>

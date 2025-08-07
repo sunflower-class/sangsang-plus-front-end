@@ -18,7 +18,7 @@ import {
   TrendingUp,
   Package
 } from 'lucide-react';
-import { analyzeMultipleReviews, type MultipleReviewsRequest } from '@/apis/reviewAnalysisService';
+import { addBatchManualReviews, uploadFileReviews } from '@/apis/reviewAnalysisService';
 
 interface ReviewInput {
   id: string;
@@ -35,6 +35,7 @@ const ReviewAnalysisInput: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisComplete, setAnalysisComplete] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const addReviewInput = () => {
     const newReview: ReviewInput = {
@@ -74,7 +75,7 @@ const ReviewAnalysisInput: React.FC = () => {
     
     try {
       // API 요청 데이터 구성 (별점 정보를 텍스트에 포함)
-      const requestData: MultipleReviewsRequest = {
+      const requestData = {
         product_name: productName.trim(),
         reviews: validReviews.map(review => {
           // 별점이 있는 경우 리뷰 텍스트에 포함
@@ -83,15 +84,16 @@ const ReviewAnalysisInput: React.FC = () => {
           
           return {
             review_text: combinedText,
-            product_name: productName.trim()
+            product_name: productName.trim(),
+            rating: review.rating || undefined
           };
         })
       };
 
       console.log('리뷰 분석 API 호출 시작:', requestData);
       
-      // 실제 API 호출
-      const analysisResult = await analyzeMultipleReviews(requestData);
+      // 새로운 API 호출
+      const analysisResult = await addBatchManualReviews(requestData);
       
       console.log('리뷰 분석 결과:', analysisResult);
       
@@ -117,31 +119,61 @@ const ReviewAnalysisInput: React.FC = () => {
     }
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && file.type === 'text/plain') {
-      processFile(file);
+    if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv'))) {
+      setSelectedFile(file);
+    } else if (file) {
+      alert('지원되는 파일 형식이 아닙니다. .xlsx, .xls, .csv 파일만 업로드 가능합니다.');
+      event.target.value = ''; // 파일 선택 초기화
     }
   };
 
-  const processFile = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const content = e.target?.result as string;
-      const lines = content.split('\n').filter(line => line.trim().length > 0);
+  const handleFileSubmit = async () => {
+    if (!selectedFile) return;
+    await processFileUpload(selectedFile);
+  };
+
+  const removeSelectedFile = () => {
+    setSelectedFile(null);
+  };
+
+  const processFileUpload = async (file: File) => {
+    if (!productName.trim()) {
+      alert('파일 업로드 전에 제품명을 먼저 입력해주세요.');
+      return;
+    }
+
+    setIsAnalyzing(true);
+    
+    try {
+      console.log('파일 업로드 시작:', file.name);
       
-      const newReviews: ReviewInput[] = lines.map((line, index) => ({
-        id: `upload_${index}`,
-        text: line.trim(),
-        rating: 0
-      }));
+      // 새로운 파일 업로드 API 호출
+      const analysisResult = await uploadFileReviews(file, productName.trim());
       
-      setReviews(newReviews);
-      if (!productName.trim()) {
-        setProductName('업로드된 제품');
-      }
-    };
-    reader.readAsText(file);
+      console.log('파일 업로드 분석 결과:', analysisResult);
+      
+      // 분석 결과를 localStorage에 저장
+      const dataToStore = {
+        analysisResult,
+        productName: productName.trim(),
+        uploadedFileName: file.name
+      };
+      localStorage.setItem('reviewAnalysisData', JSON.stringify(dataToStore));
+      
+      setAnalysisComplete(true);
+      
+      // 2초 후 결과 페이지로 이동
+      setTimeout(() => {
+        navigate('/review-analysis-result');
+      }, 2000);
+      
+    } catch (error) {
+      console.error('파일 업로드 분석 실패:', error);
+      alert('파일 분석 중 오류가 발생했습니다. 파일 형식과 내용을 확인하고 다시 시도해주세요.');
+      setIsAnalyzing(false);
+    }
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -154,15 +186,21 @@ const ReviewAnalysisInput: React.FC = () => {
     setIsDragOver(false);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
     
     const files = Array.from(e.dataTransfer.files);
-    const txtFile = files.find(file => file.type === 'text/plain');
+    const excelFile = files.find(file => 
+      file.name.endsWith('.xlsx') || 
+      file.name.endsWith('.xls') || 
+      file.name.endsWith('.csv')
+    );
     
-    if (txtFile) {
-      processFile(txtFile);
+    if (excelFile) {
+      setSelectedFile(excelFile);
+    } else {
+      alert('지원되는 파일 형식이 아닙니다. .xlsx, .xls, .csv 파일만 업로드 가능합니다.');
     }
   };
 
@@ -357,49 +395,101 @@ const ReviewAnalysisInput: React.FC = () => {
               <span>파일 업로드</span>
             </CardTitle>
             <CardDescription>
-              텍스트 파일(.txt)로 여러 리뷰를 한번에 업로드하세요
+              엑셀 파일 (.xlsx, .xls, .csv) (최대 10MB)로 여러 리뷰를 한번에 업로드하세요
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div 
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-all ${
-                  isDragOver 
-                    ? 'border-primary bg-primary/5' 
-                    : 'border-gray-300 hover:border-primary'
-                }`}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-              >
-                <Upload className="h-8 w-8 text-gray-400 mx-auto mb-4" />
-                <div className="space-y-2 mb-4">
-                  <h3 className="font-medium">
-                    {isDragOver ? '파일을 여기에 놓으세요' : '파일을 선택하거나 드래그하세요'}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    .txt 파일만 지원됩니다. 각 줄에 하나의 리뷰를 입력해주세요.
-                  </p>
+              {!selectedFile ? (
+                <div 
+                  className={`border-2 border-dashed rounded-lg p-8 text-center transition-all ${
+                    isDragOver 
+                      ? 'border-primary bg-primary/5' 
+                      : 'border-gray-300 hover:border-primary'
+                  }`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
+                  <Upload className="h-8 w-8 text-gray-400 mx-auto mb-4" />
+                  <div className="space-y-2 mb-4">
+                    <h3 className="font-medium">
+                      {isDragOver ? '파일을 여기에 놓으세요' : '파일을 선택하거나 드래그하세요'}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      엑셀 파일 (.xlsx, .xls, .csv) 형식으로 리뷰를 업로드할 수 있습니다.
+                    </p>
+                  </div>
+                  <div className="relative">
+                    <Button 
+                      variant="outline" 
+                      className="relative overflow-hidden"
+                      asChild
+                    >
+                      <label className="cursor-pointer">
+                        <FileText className="h-4 w-4 mr-2" />
+                        파일 선택
+                        <input
+                          type="file"
+                          accept=".xlsx,.xls,.csv"
+                          onChange={handleFileUpload}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                      </label>
+                    </Button>
+                  </div>
                 </div>
-                <div className="relative">
-                  <Button 
-                    variant="outline" 
-                    className="relative overflow-hidden"
-                    asChild
-                  >
-                    <label className="cursor-pointer">
-                      <FileText className="h-4 w-4 mr-2" />
-                      파일 선택
-                      <input
-                        type="file"
-                        accept=".txt"
-                        onChange={handleFileUpload}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      />
-                    </label>
-                  </Button>
+              ) : (
+                <div className="border-2 border-green-200 bg-green-50 rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <FileText className="h-5 w-5 text-green-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-green-800">{selectedFile.name}</h3>
+                        <p className="text-sm text-green-600">
+                          파일 크기: {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={removeSelectedFile}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <Button
+                      onClick={handleFileSubmit}
+                      disabled={isAnalyzing || !productName.trim()}
+                      className="w-full bg-green-600 hover:bg-green-700"
+                    >
+                      {isAnalyzing ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          분석 중...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-4 w-4 mr-2" />
+                          파일 분석 시작하기
+                        </>
+                      )}
+                    </Button>
+                    
+                    {!productName.trim() && (
+                      <div className="text-center text-sm text-orange-600">
+                        파일 분석을 위해 제품명을 먼저 입력해주세요.
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
               
               <div className="bg-blue-50 p-4 rounded-lg">
                 <div className="flex items-start space-x-2">
@@ -407,8 +497,10 @@ const ReviewAnalysisInput: React.FC = () => {
                   <div className="text-sm">
                     <h4 className="font-medium text-blue-800 mb-1">파일 형식 안내</h4>
                     <ul className="text-blue-700 space-y-1">
-                      <li>• 각 줄에 하나의 리뷰 작성</li>
-                      <li>• 최대 100개 리뷰까지 지원</li>
+                      <li>지원 형식: .xlsx, .xls, .csv</li>
+                      <li>최대 파일 크기: 10MB</li>
+                      <li>필수 컬럼: review_text (리뷰 내용)</li>
+                      <li>선택 컬럼: product_name (제품명), rating (평점 1-5)</li>
                     </ul>
                   </div>
                 </div>
