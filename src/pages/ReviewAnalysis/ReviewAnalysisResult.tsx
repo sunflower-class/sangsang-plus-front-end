@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/form/button';
@@ -16,11 +17,10 @@ import {
   CheckCircle,
   TrendingUp
 } from 'lucide-react';
-import { type ComprehensiveAnalysisResult } from '@/apis/reviewAnalysisService';
 
 const ReviewAnalysisResult: React.FC = () => {
   const navigate = useNavigate();
-  const [analysisResult, setAnalysisResult] = useState<ComprehensiveAnalysisResult | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -51,7 +51,7 @@ const ReviewAnalysisResult: React.FC = () => {
       console.log('원본 API 응답:', rawApiResult);
       
       // 백엔드에서 오는 응답 구조에 맞게 데이터 추출
-      let apiResult: ComprehensiveAnalysisResult;
+      let apiResult: Record<string, unknown>;
       
       if (rawApiResult.report) {
         // 백엔드 응답에서 report 객체 추출 및 변환
@@ -93,7 +93,7 @@ const ReviewAnalysisResult: React.FC = () => {
         };
       } else {
         // 이미 올바른 형식인 경우
-        apiResult = rawApiResult as ComprehensiveAnalysisResult;
+        apiResult = rawApiResult;
       }
       
       console.log('변환된 분석 결과:', apiResult);
