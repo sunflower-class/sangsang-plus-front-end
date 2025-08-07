@@ -1,10 +1,10 @@
-import axios from "axios";
+import publicApiClient from "../config/publicApi";
 import { VITE_QUESTION_URL} from "../env/env";
 
 const API_BASE_URL = VITE_QUESTION_URL;
 
 /**
- * Generic API caller function using axios.
+ * Generic API caller function using public API client (no auth token).
  * @param {string} method - The HTTP method (get, post, put, delete).
  * @param {string} endpoint - The API endpoint.
  * @param {object} [data={}] - The data for POST, PUT requests.
@@ -14,18 +14,18 @@ const API_BASE_URL = VITE_QUESTION_URL;
 const apiClient = async (method, endpoint, data = {}, params = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
   try {
-    const response = await axios({
+    const response = await publicApiClient({
       method,
       url,
       data,
       params,
       headers: { "Content-Type": "application/json" },
     });
-    console.log(`API 호출: ${method.toUpperCase()} ${url}`, data, params);
+    console.log(`Public API 호출: ${method.toUpperCase()} ${url}`, data, params);
     console.log(`응답:`, response.data);
     return response.data;
   } catch (error) {
-    console.error(`API 오류 발생: ${method.toUpperCase()} ${url}:`, error.response ? error.response.data : error.message);
+    console.error(`Public API 오류 발생: ${method.toUpperCase()} ${url}:`, error.response ? error.response.data : error.message);
     throw error;
   }
 };

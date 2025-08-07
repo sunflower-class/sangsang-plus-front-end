@@ -2,12 +2,37 @@
 FROM node:22 AS builder
 WORKDIR /app
 
+# Define build args for environment variables
+ARG VITE_API_URL=https://oauth.buildingbite.com
+ARG VITE_GENERATE_URL=https://oauth.buildingbite.com
+ARG VITE_REVIEW_URL=https://oauth.buildingbite.com/api/review
+ARG VITE_QUESTION_URL=https://oauth.buildingbite.com/api/customer
+ARG VITE_USER_URL=https://oauth.buildingbite.com/api/users
+
+# Set environment variables for build
+ENV VITE_API_URL=${VITE_API_URL}
+ENV VITE_GENERATE_URL=${VITE_GENERATE_URL}
+ENV VITE_REVIEW_URL=${VITE_REVIEW_URL}
+ENV VITE_QUESTION_URL=${VITE_QUESTION_URL}
+ENV VITE_USER_URL=${VITE_USER_URL}
+
 # Copy package files first for better caching
 COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile --production=false
 
-# Copy source code
+# Copy source code (excluding env files)
 COPY . .
+
+# Create env directory and file with build-time environment variables
+RUN mkdir -p src/env && \
+    echo "export const API_URL = '${VITE_API_URL}';" > src/env/env.ts && \
+    echo "export const VITE_API_URL = '${VITE_API_URL}';" >> src/env/env.ts && \
+    echo "export const VITE_GENERATE_URL = '${VITE_GENERATE_URL}';" >> src/env/env.ts && \
+    echo "export const VITE_REVIEW_URL = '${VITE_REVIEW_URL}';" >> src/env/env.ts && \
+    echo "export const VITE_QUESTION_URL = '${VITE_QUESTION_URL}';" >> src/env/env.ts && \
+    echo "export const VITE_USER_URL = '${VITE_USER_URL}';" >> src/env/env.ts && \
+    echo "export const ENVIRONMENT = 'production';" >> src/env/env.ts
+
 RUN yarn build:kubernetes
 
 # 2단계: 정적 파일 제공

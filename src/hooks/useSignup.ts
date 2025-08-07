@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import userService from '@/apis/userService';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useSignup = () => {
+  const { signup } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -51,14 +52,13 @@ export const useSignup = () => {
     setIsLoading(true);
 
     try {
-      await userService.signUp({
-        email: formData.email,
-        name: formData.name,
-        password: formData.password,
-        // agreeToMarketing: agreements.marketing, // 백엔드에 해당 필드가 추가될 때까지 주석 처리
-      });
-      toast.success('회원가입이 완료되었습니다!');
-      navigate('/login');
+      const success = await signup(formData.email, formData.password, formData.name);
+      if (success) {
+        toast.success('회원가입이 완료되었습니다!');
+        navigate('/dashboard');  // 자동 로그인되므로 대시보드로 이동
+      } else {
+        toast.error('회원가입 중 오류가 발생했습니다.');
+      }
     } catch (error) {
       toast.error('회원가입 중 오류가 발생했습니다.');
     } finally {
