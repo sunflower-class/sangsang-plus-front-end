@@ -1,7 +1,7 @@
 import axios from "axios";
-import { VITE_API_URL } from "../env/env";
+import { VITE_USER_URL} from "../env/env";
 
-const AUTH_URL = `${VITE_API_URL}/api/auth`;
+const AUTH_URL = `${VITE_USER_URL}/api/auth`;
 
 interface LoginRequest {
   email: string;

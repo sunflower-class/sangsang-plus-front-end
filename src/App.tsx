@@ -30,7 +30,17 @@ const App = () => (
     <TooltipProvider>
       <AuthProvider>
         <Toaster />
-        <Sonner />
+        <Sonner 
+          toastOptions={{
+            classNames: {
+              toast: 'bg-background text-foreground border-border shadow-lg',
+              title: 'text-sm font-semibold',
+              description: 'text-sm',
+              actionButton: 'bg-primary text-primary-foreground',
+              cancelButton: 'bg-muted text-muted-foreground',
+            },
+          }}
+        />
         <BrowserRouter>
           <div className="min-h-screen flex flex-col">
             <Header />
