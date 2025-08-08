@@ -620,7 +620,7 @@ const QnA = () => {
 
       {/* Chatbot Window */}
       {isChatbotOpen && (
-        <Chatbot />
+        <Chatbot onClose={() => setIsChatbotOpen(false)} />
       )}
     </div>
   );
