@@ -193,7 +193,7 @@ const PrivacyPolicyPage = () => {
               <div className="space-y-2 text-sm text-yellow-700">
                 <p><strong>성명:</strong> 이민욱</p>
                 <p><strong>직책:</strong> 개인정보보호책임자</p>
-                <p><strong>이메일:</strong> privacy@sangsangplus.com</p>
+                <p><strong>이메일:</strong> sangsangplus@gmail.com</p>
                 <p><strong>전화번호:</strong> 02-1234-5678</p>
               </div>
             </div>

@@ -201,7 +201,7 @@ const CookiePolicyPage = () => {
             <div className="bg-red-50 p-4 rounded-lg border border-red-200">
               <h4 className="font-medium text-red-800 mb-3">쿠키 정책 관련 문의</h4>
               <div className="space-y-2 text-sm text-red-700">
-                <p><strong>이메일:</strong> cookie@sangsangplus.com</p>
+                <p><strong>이메일:</strong> sangsangplus@gmail.com</p>
                 <p><strong>전화번호:</strong> 02-1234-5678</p>
                 <p><strong>담당부서:</strong> 개인정보보호팀</p>
               </div>
