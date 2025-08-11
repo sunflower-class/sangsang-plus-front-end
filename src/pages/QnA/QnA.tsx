@@ -309,7 +309,7 @@ const QnA = () => {
                           }))
                         }
                         placeholder="질문 내용을 자세히 입력하세요"
-                        className="mt-1 min-h-32"
+                        className="mt-1 min-h-32 resize-none"
                       />
                     </div>
                     <div className="flex justify-end space-x-2">
@@ -564,7 +564,7 @@ const QnA = () => {
                         value={newReply}
                         onChange={(e) => setNewReply(e.target.value)}
                         placeholder="답변을 입력하세요"
-                        className="min-h-20"
+                        className="min-h-20 resize-none"
                       />
                       <Button
                         onClick={() => handleAddReply(selectedQuestion.id)}

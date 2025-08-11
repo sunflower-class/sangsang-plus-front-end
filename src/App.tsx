@@ -54,13 +54,14 @@ const App = () => (
                 <Route path="/terms-of-service" element={<TermsOfServicePage />} />
                 <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
                 <Route path="/cookie-policy" element={<CookiePolicyPage />} />
-                <Route path="/qna" element={<QnA />} />
+
+                <Route path="/generate" element={<Generate />} />
 
                 {/* Protected Routes */}
                 <Route element={<ProtectedRoute />}>
                   <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/generate" element={<Generate />} />
                   <Route path="/editor/:pageId" element={<Editor />} />
+                  <Route path="/qna" element={<QnA />} />
                   <Route path="/review-analysis" element={<ReviewAnalysis />} />
                   <Route path="/review-analysis-result" element={<ReviewAnalysisResult />} />
                   <Route path="/profile" element={<Profile />} />
