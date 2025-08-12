@@ -2,7 +2,7 @@ import axios from "axios";
 
 import { VITE_USER_URL } from "../env/env";
 
-const USER_URL = `${VITE_USER_URL}/users`;
+const USER_URL = `${VITE_USER_URL}/api/users`;
 
 /** 회원가입 요청 */
 export const signUp = async (user) => {

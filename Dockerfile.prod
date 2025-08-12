@@ -7,7 +7,7 @@ ARG VITE_API_URL=https://oauth.buildingbite.com
 ARG VITE_GENERATE_URL=https://oauth.buildingbite.com
 ARG VITE_REVIEW_URL=https://oauth.buildingbite.com/api/review
 ARG VITE_QUESTION_URL=https://oauth.buildingbite.com/api/customer
-ARG VITE_USER_URL=https://oauth.buildingbite.com/api/users
+ARG VITE_USER_URL=https://oauth.buildingbite.com
 
 # Set environment variables for build
 ENV VITE_API_URL=${VITE_API_URL}
