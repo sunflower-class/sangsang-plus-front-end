@@ -51,7 +51,7 @@ jobs:
           VITE_GENERATE_URL=${{ secrets.VITE_GENERATE_URL || 'https://oauth.buildingbite.com' }}
           VITE_REVIEW_URL=${{ secrets.VITE_REVIEW_URL || 'https://oauth.buildingbite.com/api/review' }}
           VITE_QUESTION_URL=${{ secrets.VITE_QUESTION_URL || 'https://oauth.buildingbite.com/api/customer' }}
-          VITE_USER_URL=${{ secrets.VITE_USER_URL || 'https://oauth.buildingbite.com/api/users' }}
+          VITE_USER_URL=${{ secrets.VITE_USER_URL || 'https://oauth.buildingbite.com' }}
 
   deploy:
     needs: build-and-push
