@@ -17,7 +17,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
-import userService from '@/apis/userService';
+import authService from '@/apis/authService';
 import ConfirmationDialog from '@/components/ui/overlay/confirmation-dialog';
 import { useNavigate } from 'react-router-dom';
 
@@ -46,7 +46,7 @@ const Profile = () => {
         toast.error('사용자 ID를 찾을 수 없습니다.');
         return;
       }
-      await userService.updateUserName(user.id, profileData.name);
+      await authService.updateUserName(user.id, profileData.name);
       toast.success('프로필이 업데이트되었습니다. 다시 로그인해주세요.');
       logout();
       navigate('/login');
@@ -66,7 +66,7 @@ const Profile = () => {
         toast.error('사용자 ID를 찾을 수 없습니다.');
         return;
       }
-      await userService.deleteUser(user.id);
+      await authService.deleteUser(user.id);
       toast.success('회원 탈퇴가 완료되었습니다.');
       logout();
       navigate('/login');
@@ -97,7 +97,7 @@ const Profile = () => {
         toast.error('사용자 ID를 찾을 수 없습니다.');
         return;
       }
-      await userService.updateUserPassword(user.id, passwordData.newPassword);
+      await authService.updateUserPassword(user.id, passwordData.newPassword);
       toast.success('비밀번호가 변경되었습니다. 다시 로그인해주세요.');
       logout();
       navigate('/login');
