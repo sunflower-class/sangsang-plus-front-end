@@ -82,16 +82,16 @@ const Generate = () => {
     setGenerationProgress(20);
 
     try {
-      const requestData = { product_data: formData.productName };
-
-      const response = await generateHTML(requestData);
+      // 이미지 URL은 현재 임시로 빈 문자열로 전달합니다. 실제 구현에서는 이미지 업로드 후 반환되는 URL을 사용해야 합니다.
+      const productImageUrl = formData.images.length > 0 ? URL.createObjectURL(formData.images[0]) : "";
+      const htmlList = await generateHTML(formData.productName, productImageUrl);
 
       setGenerationStatus('HTML 생성이 완료되었습니다.');
       setGenerationProgress(100);
       
       // 에디터 페이지로 생성된 HTML과 함께 이동
-      if (response && response.data && response.data.html_list && response.data.html_list.length > 0) {
-        const processedHtml = response.data.html_list.map((htmlBlock, index) => {
+      if (htmlList && htmlList.length > 0) {
+        const processedHtml = htmlList.map((htmlBlock, index) => {
           // 에디터가 블록을 인식하고 편집할 수 있도록 section 태그와 고유 ID를 추가합니다.
           return `<section id="block-${index}">${htmlBlock}</section>`;
         }).join('\n');

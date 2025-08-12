@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/form/button';
 import { Input } from '@/components/ui/form/input';
 import { Textarea } from '@/components/ui/form/textarea';
 import { ScrollArea } from '@/components/ui/layout/scroll-area';
-import { Send, Bot, User, Loader2, PlusCircle, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Send, Bot, User, Loader2, PlusCircle, ThumbsUp, ThumbsDown, X } from 'lucide-react';
 import { chatQuery, summarizeAndSubmitPost, addFeedback } from '@/apis/questionService';
 import { toast } from 'sonner';
 import {
@@ -20,10 +20,10 @@ interface Message {
 }
 
 interface ChatbotProps {
-  onNewQuestion?: (question: string) => void; 
+  onClose: () => void;
 }
 
-const Chatbot: React.FC<ChatbotProps> = () => {
+const Chatbot: React.FC<ChatbotProps> = ({ onClose }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -160,9 +160,14 @@ const Chatbot: React.FC<ChatbotProps> = () => {
 
   return (
     <div className="fixed bottom-20 right-8 w-96 h-[600px] bg-card border border-border rounded-lg shadow-xl flex flex-col z-50">
-      <div className="p-4 border-b border-border flex items-center">
-        <Bot className="w-6 h-6 mr-2" />
-        <h3 className="font-bold">상상플러스 챗봇</h3>
+      <div className="p-4 border-b border-border flex items-center justify-between">
+        <div className="flex items-center">
+          <Bot className="w-6 h-6 mr-2" />
+          <h3 className="font-bold">상상플러스 챗봇</h3>
+        </div>
+        <Button variant="ghost" size="icon" onClick={onClose}>
+          <X className="w-5 h-5" />
+        </Button>
       </div>
 
       <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>

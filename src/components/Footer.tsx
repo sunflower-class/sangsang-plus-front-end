@@ -30,9 +30,9 @@ const Footer = () => {
             </p>
           </div>
 
-          {/* Services */}
+          {/* Quick Links */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-foreground">서비스</h3>
+            <h3 className="font-semibold text-foreground">바로가기</h3>
             <div className="space-y-2">
               <Link to="/generate" className="block text-muted-foreground hover:text-primary transition-colors text-sm">
                 AI 상세페이지 생성
@@ -41,24 +41,8 @@ const Footer = () => {
                 페이지 관리
               </Link>
               <Link to="/qna" className="block text-muted-foreground hover:text-primary transition-colors text-sm">
-                고객 지원
-              </Link>
-            </div>
-          </div>
-
-          {/* Support */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-foreground">지원</h3>
-            <div className="space-y-2">
-              <Link to="/qna" className="block text-muted-foreground hover:text-primary transition-colors text-sm">
                 Q&A 게시판
               </Link>
-              <a href="#" className="block text-muted-foreground hover:text-primary transition-colors text-sm">
-                사용 가이드
-              </a>
-              <a href="#" className="block text-muted-foreground hover:text-primary transition-colors text-sm">
-                고객센터
-              </a>
             </div>
           </div>
 

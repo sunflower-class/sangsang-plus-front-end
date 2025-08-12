@@ -30,7 +30,17 @@ const App = () => (
     <TooltipProvider>
       <AuthProvider>
         <Toaster />
-        <Sonner />
+        <Sonner 
+          toastOptions={{
+            classNames: {
+              toast: 'bg-background text-foreground border-border shadow-lg',
+              title: 'text-sm font-semibold',
+              description: 'text-sm',
+              actionButton: 'bg-primary text-primary-foreground',
+              cancelButton: 'bg-muted text-muted-foreground',
+            },
+          }}
+        />
         <BrowserRouter>
           <div className="min-h-screen flex flex-col">
             <Header />
@@ -44,12 +54,13 @@ const App = () => (
                 <Route path="/terms-of-service" element={<TermsOfServicePage />} />
                 <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
                 <Route path="/cookie-policy" element={<CookiePolicyPage />} />
-                
+
+                <Route path="/generate" element={<Generate />} />
+                <Route path="/editor/:pageId" element={<Editor />} />
+
                 {/* Protected Routes */}
                 <Route element={<ProtectedRoute />}>
                   <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/generate" element={<Generate />} />
-                  <Route path="/editor/:pageId" element={<Editor />} />
                   <Route path="/qna" element={<QnA />} />
                   <Route path="/review-analysis" element={<ReviewAnalysis />} />
                   <Route path="/review-analysis-result" element={<ReviewAnalysisResult />} />

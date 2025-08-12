@@ -8,7 +8,7 @@ import { Sparkles, Mail, Lock, Loader2 } from 'lucide-react';
 import { useLogin } from '@/hooks/useLogin';
 
 const Login = () => {
-  const { isLoading, formData, handleSubmit, handleChange } = useLogin();
+  const { isLoading, formData, error, handleSubmit, handleChange } = useLogin();
 
   return (
     <div className="min-h-screen bg-gradient-soft flex items-center justify-center p-4">
@@ -28,7 +28,7 @@ const Login = () => {
         </CardHeader>
         
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <div className="space-y-2">
               <Label htmlFor="email">이메일</Label>
               <div className="relative">
@@ -40,8 +40,7 @@ const Login = () => {
                   placeholder="example@email.com"
                   value={formData.email}
                   onChange={handleChange}
-                  className="pl-10"
-                  required
+                  className={`pl-10 ${error ? 'border-red-500' : ''}`}
                 />
               </div>
             </div>
@@ -57,11 +56,14 @@ const Login = () => {
                   placeholder="비밀번호를 입력하세요"
                   value={formData.password}
                   onChange={handleChange}
-                  className="pl-10"
-                  required
+                  className={`pl-10 ${error ? 'border-red-500' : ''}`}
                 />
               </div>
             </div>
+
+            {error && (
+              <p className="text-sm text-red-500">{error}</p>
+            )}
             
             <Button 
               type="submit" 
