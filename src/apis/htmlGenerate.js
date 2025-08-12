@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { VITE_GENERATE_URL } from '../env/env';
 
-const API_URL = "http://localhost:8000/api/generation/display-list";
+const API_URL = "/api/generation/display-list";
 
 export const generateHTML = async (productData, productImageUrl) => {
   try {

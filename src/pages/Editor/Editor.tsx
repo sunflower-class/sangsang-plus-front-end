@@ -1,35 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/form/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/layout/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/layout/tabs';
-import { Textarea } from '@/components/ui/form/textarea';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/layout/card';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/layout/tabs';
 import { Label } from '@/components/ui/form/label';
-import { Input } from '@/components/ui/form/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/overlay/dialog';
 import { 
   Save, 
   Eye, 
-  Code, 
   Image as ImageIcon, 
-  RefreshCw, 
-  Upload,
-  Loader2,
-  Sparkles
+  PenSquare
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Textarea } from '@/components/ui/form/textarea';
 
 const Editor = () => {
   const { pageId } = useParams();
   const location = useLocation();
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
   const [htmlContent, setHtmlContent] = useState('');
-  const [blockHtml, setBlockHtml] = useState('');
-  const [isRegenerating, setIsRegenerating] = useState(false);
-  const [regeneratePrompt, setRegeneratePrompt] = useState('');
-
-  // 더미 HTML 컨텐츠
- 
+  const [rawBlockHtml, setRawBlockHtml] = useState('');
+  const [blockImages, setBlockImages] = useState<string[]>([]);
+  const [base64ImageMap, setBase64ImageMap] = useState<Record<string, string>>({});
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [activeTab, setActiveTab] = useState('html');
 
   useEffect(() => {
     if (location.state?.generatedHtml) {
@@ -37,230 +31,224 @@ const Editor = () => {
     }
   }, [pageId, location.state]);
 
-  useEffect(() => {
-    // 클릭 이벤트 리스너 추가
-    const handleBlockClick = (e: Event) => {
-      const target = e.target as HTMLElement;
-      const block = target.closest('section');
-      if (block && block.id) {
-        setSelectedBlock(block.id);
-        setBlockHtml(block.outerHTML);
-      }
-    };
-
-    const iframe = document.getElementById('preview-iframe') as HTMLIFrameElement;
-    if (iframe && iframe.contentDocument) {
-      const sections = iframe.contentDocument.querySelectorAll('section');
-      sections.forEach(section => {
-        section.addEventListener('click', handleBlockClick);
-      });
-    }
-
-    return () => {
-      if (iframe && iframe.contentDocument) {
-        const sections = iframe.contentDocument.querySelectorAll('section');
-        sections.forEach(section => {
-          section.removeEventListener('click', handleBlockClick);
-        });
-      }
-    };
-  }, [htmlContent]);
+  const processedRawHtml = useMemo(() => {
+    const newMap: Record<string, string> = {};
+    let imageCounter = 0;
+    if (!rawBlockHtml) return '';
+    const processed = rawBlockHtml.replace(/src="(data:image\/[^;]+;base64,[^"]+)"/g, (match, p1) => {
+      const placeholder = `[image-data-${++imageCounter}]`;
+      newMap[placeholder] = p1;
+      return `src="${placeholder}"`;
+    });
+    setBase64ImageMap(newMap);
+    return processed;
+  }, [rawBlockHtml]);
 
   const handleSave = () => {
     toast.success('변경사항이 저장되었습니다.');
   };
 
-  const handleApplyChanges = () => {
-    // 실제 구현에서는 선택된 블록의 HTML을 업데이트
+  const handleApplyChanges = (mode: 'raw') => {
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlContent, 'text/html');
     const targetBlock = doc.getElementById(selectedBlock || '');
     
-    if (targetBlock && blockHtml) {
-      const newDoc = parser.parseFromString(blockHtml, 'text/html');
-      const newBlock = newDoc.querySelector('section');
-      if (newBlock) {
-        targetBlock.outerHTML = newBlock.outerHTML;
-        setHtmlContent(doc.body.innerHTML);
-        toast.success('블록이 업데이트되었습니다.');
+    if (targetBlock) {
+      if (mode === 'raw') {
+        let finalHtml = rawBlockHtml;
+        Object.entries(base64ImageMap).forEach(([placeholder, originalSrc]) => {
+          finalHtml = finalHtml.replace(`src="${placeholder}"`, `src="${originalSrc}"`);
+        });
+        const tempDiv = doc.createElement('div');
+        tempDiv.innerHTML = finalHtml;
+        const newBlock = tempDiv.firstElementChild;
+        if (newBlock) {
+          targetBlock.replaceWith(newBlock);
+          setHtmlContent(doc.body.innerHTML);
+        }
       }
+      toast.success('블록이 업데이트되었습니다.');
     }
   };
 
-  const handleRegenerateImage = async () => {
-    if (!regeneratePrompt.trim()) {
-      toast.error('이미지 재생성 프롬프트를 입력해주세요.');
-      return;
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && selectedImage) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const newSrc = event.target?.result as string;
+        const newHtmlContent = htmlContent.replace(selectedImage, newSrc);
+        setHtmlContent(newHtmlContent);
+        toast.success('이미지가 변경되었습니다.');
+        const newBlockImages = blockImages.map(img => img === selectedImage ? newSrc : img);
+        setBlockImages(newBlockImages);
+        setSelectedImage(newSrc);
+      };
+      reader.readAsDataURL(file);
     }
-
-    setIsRegenerating(true);
-    
-    // 이미지 재생성 시뮬레이션
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    setIsRegenerating(false);
-    setRegeneratePrompt('');
-    toast.success('이미지가 재생성되었습니다.');
   };
+
+  const triggerFileSelect = () => fileInputRef.current?.click();
 
   return (
     <div className="min-h-screen bg-background">
+      <input type="file" ref={fileInputRef} onChange={handleImageChange} className="hidden" accept="image/*" />
+      
+      {/* Header */}
       <div className="border-b border-border bg-background">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">상세페이지 에디터</h1>
-              <p className="text-muted-foreground">블록을 클릭하여 수정하세요</p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Button variant="outline" className="flex items-center space-x-2">
-                <Eye className="h-4 w-4" />
-                <span>미리보기</span>
-              </Button>
-              <Button onClick={handleSave} className="btn-primary flex items-center space-x-2">
-                <Save className="h-4 w-4" />
-                <span>저장</span>
-              </Button>
-            </div>
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">상세페이지 에디터</h1>
+            <p className="text-muted-foreground">수정하고 싶은 블록을 클릭하세요.</p>
+          </div>
+          <div className="flex items-center space-x-4">
+            <Button onClick={handleSave}><Save className="mr-2 h-4 w-4" />저장</Button>
           </div>
         </div>
       </div>
 
-      <div className="flex h-[calc(100vh-120px)]">
-        {/* Preview Area (70%) */}
-        <div className="flex-1 bg-background-soft p-4">
-          <div className="h-full bg-white rounded-lg shadow-custom overflow-auto">
+      <div className="flex h-[calc(100vh-81px)]">
+        {/* Preview Area */}
+        <div className="flex-1 bg-gray-100 p-4">
+          <div className="h-full bg-white rounded-lg shadow-lg overflow-auto">
             <iframe
               id="preview-iframe"
-              srcDoc={`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                  <meta charset="UTF-8">
-                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                  <script src="https://cdn.tailwindcss.com"></script>
-                  <style>
-                    section:hover {
-                      ring: 2px solid #3B82F6 !important;
-                      ring-opacity: 0.5 !important;
-                    }
-                  </style>
-                </head>
-                <body class="p-4">
-                  ${htmlContent}
-                </body>
-                </html>
-              `}
+              srcDoc={htmlContent}
               className="w-full h-full border-0"
               title="Preview"
+              onLoad={() => {
+                const iframe = document.getElementById('preview-iframe') as HTMLIFrameElement;
+                if (!iframe || !iframe.contentDocument) return;
+                
+                const style = iframe.contentDocument.createElement('style');
+                style.innerHTML = `
+                  html, body { height: 100%; font-family: sans-serif; }
+                  section:hover {
+                    outline: 2px dashed #3B82F6;
+                    outline-offset: 2px;
+                    cursor: pointer;
+                  }
+                  section.selected-block {
+                    outline: 2px solid #10B981;
+                    outline-offset: 2px;
+                  }
+                `;
+                iframe.contentDocument.head.appendChild(style);
+
+                const sections = iframe.contentDocument.querySelectorAll('section');
+                sections.forEach(section => {
+                  section.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const target = e.currentTarget as HTMLElement;
+                    iframe.contentDocument?.querySelector('.selected-block')?.classList.remove('selected-block');
+                    target.classList.add('selected-block');
+                    
+                    if (target.id) {
+                      setSelectedBlock(target.id);
+                      setRawBlockHtml(target.outerHTML);
+                      const images = Array.from(target.querySelectorAll('img')).map(img => img.src);
+                      setBlockImages(images);
+                      setSelectedImage(null);
+                    }
+                  });
+                });
+              }}
             />
           </div>
         </div>
 
-        {/* Edit Panel (30%) */}
-        <div className="w-96 bg-background border-l border-border p-4">
+        {/* Edit Panel */}
+        <div className="w-96 bg-background border-l border-border">
           {selectedBlock ? (
-            <Card className="h-full">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Code className="h-5 w-5" />
+            <Card className="h-full flex flex-col rounded-none border-0">
+              <CardHeader className="p-4 border-b">
+                <CardTitle className="flex items-center space-x-2 text-lg">
+                  <PenSquare className="h-5 w-5" />
                   <span>블록 편집</span>
                 </CardTitle>
-                <CardDescription>
-                  선택된 블록: {selectedBlock}
-                </CardDescription>
+                <CardDescription className="text-xs">선택된 블록: {selectedBlock}</CardDescription>
               </CardHeader>
               
-              <CardContent className="flex-1 overflow-auto">
-                <Tabs defaultValue="html" className="h-full">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="html">HTML 편집</TabsTrigger>
-                    <TabsTrigger value="images">이미지 편집</TabsTrigger>
+              <div className="flex-1 flex flex-col overflow-hidden">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+                  <TabsList className="grid w-full grid-cols-2 mt-4 ">
+                    <TabsTrigger value="html">HTML</TabsTrigger>
+                    <TabsTrigger value="images">이미지</TabsTrigger>
                   </TabsList>
                   
-                  <TabsContent value="html" className="mt-4 space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="block-html">HTML 코드</Label>
-                      <Textarea
-                        id="block-html"
-                        value={blockHtml}
-                        onChange={(e) => setBlockHtml(e.target.value)}
-                        className="min-h-64 font-mono text-sm"
-                        placeholder="선택된 블록의 HTML 코드가 여기에 표시됩니다"
-                      />
-                    </div>
-                    
-                    <Button 
-                      onClick={handleApplyChanges}
-                      className="w-full btn-secondary"
-                    >
-                      변경사항 적용
-                    </Button>
-                  </TabsContent>
-                  
-                  <TabsContent value="images" className="mt-4 space-y-4">
-                    <div className="space-y-4">
-                      <div className="p-4 border border-border rounded-lg">
-                        <img
-                          src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=200&fit=crop"
-                          alt="현재 이미지"
-                          className="w-full h-32 object-cover rounded-lg mb-3"
-                        />
-                        <div className="flex space-x-2">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button variant="outline" size="sm" className="flex items-center space-x-1">
-                                <RefreshCw className="h-3 w-3" />
-                                <span>재생성</span>
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>이미지 재생성</DialogTitle>
-                              </DialogHeader>
-                              <div className="space-y-4">
-                                <div>
-                                  <Label htmlFor="regenerate-prompt">
-                                    새로운 스타일이나 키워드를 입력하세요
-                                  </Label>
-                                  <Textarea
-                                    id="regenerate-prompt"
-                                    value={regeneratePrompt}
-                                    onChange={(e) => setRegeneratePrompt(e.target.value)}
-                                    placeholder="예: 더 밝은 배경, 모던한 스타일, 미니멀한 디자인"
-                                    className="mt-2"
-                                  />
-                                </div>
-                                <Button 
-                                  onClick={handleRegenerateImage}
-                                  className="w-full btn-primary"
-                                >
-                                  {isRegenerating ? (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  ) : (
-                                    <Sparkles className="mr-2 h-4 w-4" />
-                                  )}
-                                  AI로 이미지 생성
-                                </Button>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                          <Button variant="outline" size="sm" className="flex items-center space-x-1">
-                            <Upload className="h-3 w-3" />
-                            <span>업로드</span>
-                          </Button>
+                  <div className="flex-1 p-4 overflow-y-auto">
+                    {activeTab === 'html' && (
+                      <div className="flex flex-col h-full space-y-4">
+                        <div className="flex-1 min-h-0">
+                          <div className="flex flex-col h-full">
+                            <Label htmlFor="block-html-raw" className="text-sm font-medium mb-2">HTML 코드</Label>
+                            <CardDescription className="text-xs mb-2">
+                              이미지 데이터는 가독성을 위해 축약됩니다.
+                            </CardDescription>
+                            <div className="flex-1 min-h-0">
+                              <Textarea
+                                id="block-html-raw"
+                                value={processedRawHtml}
+                                onChange={(e) => setRawBlockHtml(e.target.value)}
+                                className="h-full font-mono text-xs bg-gray-800 text-gray-200 resize-none border rounded-md"
+                                placeholder="선택된 블록의 HTML 코드가 여기에 표시됩니다"
+                              />
+                            </div>
+                          </div>
                         </div>
+                        <Button onClick={() => handleApplyChanges('raw')} className="w-full">
+                          HTML 변경사항 적용
+                        </Button>
                       </div>
-                    </div>
-                  </TabsContent>
+                    )}
+                    
+                    {activeTab === 'images' && (
+                      <div className="space-y-3">
+                        {blockImages.length > 0 ? (
+                          blockImages.map((src, index) => (
+                            <div 
+                              key={index} 
+                              className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                                selectedImage === src 
+                                  ? 'border-primary ring-2 ring-primary/20 bg-primary/5' 
+                                  : 'border-gray-200 hover:border-gray-300'
+                              }`}
+                              onClick={() => setSelectedImage(src)}
+                            >
+                              <img
+                                src={src}
+                                alt={`Block image ${index + 1}`}
+                                className="w-full h-auto max-h-48 object-contain rounded-md bg-gray-100"
+                              />
+                              {selectedImage === src && (
+                                <div className="mt-3">
+                                  <Button onClick={triggerFileSelect} size="sm" className="w-full">
+                                    이미지 변경
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          ))
+                        ) : (
+                          <div className="flex flex-col items-center justify-center text-center text-muted-foreground py-12">
+                            <ImageIcon className="h-16 w-16 text-gray-300 mb-4" />
+                            <p className="text-lg font-medium">이미지가 없습니다</p>
+                            <p className="text-sm">선택된 블록에 이미지가 없습니다.</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </Tabs>
-              </CardContent>
+              </div>
             </Card>
           ) : (
             <div className="flex items-center justify-center h-full">
               <div className="text-center text-muted-foreground">
-                <p>미리보기에서 블록을 선택하여</p>
-                <p>편집을 시작하세요.</p>
+                <PenSquare className="mx-auto h-16 w-16 text-gray-300 mb-4" />
+                <p className="text-lg font-medium">블록을 선택하세요</p>
+                <p className="text-sm">미리보기에서 블록을 선택하여 편집을 시작하세요.</p>
               </div>
             </div>
           )}

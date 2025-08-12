@@ -56,11 +56,11 @@ const App = () => (
                 <Route path="/cookie-policy" element={<CookiePolicyPage />} />
 
                 <Route path="/generate" element={<Generate />} />
+                <Route path="/editor/:pageId" element={<Editor />} />
 
                 {/* Protected Routes */}
                 <Route element={<ProtectedRoute />}>
                   <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/editor/:pageId" element={<Editor />} />
                   <Route path="/qna" element={<QnA />} />
                   <Route path="/review-analysis" element={<ReviewAnalysis />} />
                   <Route path="/review-analysis-result" element={<ReviewAnalysisResult />} />
