@@ -19,7 +19,7 @@ interface ServerAuthResponse {
   message: string;
   token: string;
   refreshToken: string;
-  user: any; // null일 수 있음
+  user: any; 
   expiresIn: number;
 }
 
@@ -179,13 +179,11 @@ export const verifyToken = async (): Promise<boolean> => {
   return token !== null;
 };
 
-const USER_API_BASE_URL = `${VITE_USER_URL}/api/users`;
-
 /** 이메일로 사용자 정보 조회 */
 export const getUserByEmail = async (email: string) => {
   console.log("이메일로 사용자 정보 조회 시도:", email);
   try {
-    const response = await axios.get(`${USER_API_BASE_URL}/email/${email}`);
+    const response = await axios.get(`${AUTH_URL}/email/${email}`);
     console.log("사용자 정보 조회 성공:", response.data);
     return response.data;
   } catch (error) {
@@ -198,7 +196,7 @@ export const getUserByEmail = async (email: string) => {
 export const updateUserName = async (id: string, newName: string) => {
   console.log(`사용자 ID ${id} 이름 변경 시도:`, { newName });
   try {
-    const response = await axios.put(`${USER_API_BASE_URL}/${id}`, { name: newName });
+    const response = await axios.put(`${AUTH_URL}/${id}`, { name: newName });
     console.log("이름 변경 성공:", response.data);
     return response.data;
   } catch (error) {
@@ -211,7 +209,7 @@ export const updateUserName = async (id: string, newName: string) => {
 export const updateUserPassword = async (id: string, newPassword: string) => {
   console.log(`사용자 ID ${id} 비밀번호 업데이트 시도:`, { newPassword: "********" });
   try {
-    const response = await axios.put(`${USER_API_BASE_URL}/${id}`, { password: newPassword });
+    const response = await axios.put(`${AUTH_URL}/${id}`, { password: newPassword });
     console.log("비밀번호 업데이트 성공:", response.data);
     return response.data;
   } catch (error) {
@@ -224,7 +222,7 @@ export const updateUserPassword = async (id: string, newPassword: string) => {
 export const deleteUser = async (id: string) => {
   console.log(`사용자 ID ${id} 삭제 시도:`);
   try {
-    const response = await axios.delete(`${USER_API_BASE_URL}/${id}`);
+    const response = await axios.delete(`${AUTH_URL}/${id}`);
     console.log("사용자 삭제 성공:", response.data);
     return response.data;
   } catch (error) {
