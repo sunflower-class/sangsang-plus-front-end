@@ -156,15 +156,34 @@ export const logout = async (): Promise<void> => {
  */
 export const refreshToken = async (): Promise<string> => {
   try {
-    const response = await axios.post<{ token: string }>(`${AUTH_URL}/refresh`);
+    const refreshTokenValue = localStorage.getItem('refresh_token');
+    if (!refreshTokenValue) {
+      throw new Error('리프레시 토큰이 없습니다');
+    }
+
+    const response = await axios.post<{ token: string; refreshToken?: string }>(`${AUTH_URL}/refresh`, {
+      refreshToken: refreshTokenValue
+    });
+    
     const newToken = response.data.token;
     
+    // 새 토큰을 저장
     localStorage.setItem('jwt_token', newToken);
     axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+    
+    // 새 리프레시 토큰이 있으면 업데이트
+    if (response.data.refreshToken) {
+      localStorage.setItem('refresh_token', response.data.refreshToken);
+    }
     
     return newToken;
   } catch (error) {
     console.error("토큰 갱신 실패:", error);
+    // 리프레시 토큰도 만료된 경우 로그아웃 처리
+    localStorage.removeItem('jwt_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user');
+    delete axios.defaults.headers.common['Authorization'];
     throw error;
   }
 };

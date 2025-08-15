@@ -29,18 +29,18 @@ export const setupAxiosInterceptors = () => {
       const originalRequest = error.config;
       const requestUrl = originalRequest.url || '';
 
-      // 인증 관련 API에서만 401 오류 시 자동 로그아웃 처리
-      const isAuthAPI = requestUrl.includes('/api/auth') || 
-                       requestUrl.includes('/api/users') ||
-                       requestUrl.includes('/api/profile');
-
-      // 401 에러이고 아직 재시도하지 않은 경우, 그리고 인증 관련 API인 경우만
-      if (error.response?.status === 401 && !originalRequest._retry && isAuthAPI) {
+      // refresh 요청은 무한 루프를 방지하기 위해 제외
+      const isRefreshRequest = requestUrl.includes('/api/auth/refresh');
+      
+      // 401 에러이고 아직 재시도하지 않은 경우, refresh 요청이 아닌 경우
+      if (error.response?.status === 401 && !originalRequest._retry && !isRefreshRequest) {
         originalRequest._retry = true;
 
         try {
           // 토큰 갱신 시도
+          console.log('토큰 만료 감지, 리프레시 시도 중...');
           const newToken = await authService.refreshToken();
+          console.log('토큰 리프레시 성공');
           
           // 원래 요청에 새 토큰 적용하여 재시도
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
@@ -61,9 +61,17 @@ export const setupAxiosInterceptors = () => {
         }
       }
 
-      // 인증 관련이 아닌 API의 401 오류는 그냥 에러로 처리 (로그아웃하지 않음)
-      if (error.response?.status === 401 && !isAuthAPI) {
-        console.warn(`API 호출 권한 없음: ${requestUrl}`, error.response);
+      // refresh 요청에서 401이 발생한 경우 (리프레시 토큰도 만료)
+      if (error.response?.status === 401 && isRefreshRequest) {
+        console.warn('리프레시 토큰도 만료됨, 로그아웃 처리');
+        localStorage.removeItem('jwt_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('user');
+        delete axios.defaults.headers.common['Authorization'];
+        
+        if (window.location.pathname !== '/login' && window.location.pathname !== '/signup') {
+          window.location.href = '/login';
+        }
       }
 
       return Promise.reject(error);
