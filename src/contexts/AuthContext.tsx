@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import authService from '@/apis/authService';
-import { initializeAxiosToken, setupAxiosInterceptors } from '@/config/axiosConfig';
+import { initializeAxiosToken, setupAxiosInterceptors, setAuthCallbacks } from '@/config/axiosConfig';
 
 interface User {
   id: string;
@@ -43,9 +43,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // 토큰 갱신 시 사용자 정보 업데이트를 위한 함수
+  const updateUserFromToken = (updatedUser: User) => {
+    setUser(updatedUser);
+    setToken(localStorage.getItem('jwt_token')); // 토큰도 동기화
+    console.log('AuthContext: 사용자 정보 업데이트됨', updatedUser);
+  };
+
+  // 강제 로그아웃 함수 (토큰 만료 시 사용)
+  const forceLogout = async () => {
+    console.log('AuthContext: 강제 로그아웃 처리');
+    setUser(null);
+    setToken(null);
+    setPaymentInfo(null);
+    localStorage.removeItem('user');
+    localStorage.removeItem('jwt_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('paymentInfo');
+    
+    // 로그인 페이지로 리다이렉트
+    if (window.location.pathname !== '/login' && window.location.pathname !== '/signup') {
+      window.location.href = '/login';
+    }
+  };
+
   useEffect(() => {
     // Axios 인터셉터 설정
     setupAxiosInterceptors();
+    
+    // AuthContext와 axios 인터셉터 연동
+    setAuthCallbacks(forceLogout, updateUserFromToken);
     
     // 저장된 토큰과 사용자 정보 불러오기
     const savedToken = localStorage.getItem('jwt_token');

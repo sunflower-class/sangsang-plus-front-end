@@ -1,5 +1,17 @@
 import axios from 'axios';
 import authService from '../apis/authService';
+import { extractUserFromToken, isTokenExpired } from '../utils/tokenUtils';
+
+let authContextLogout: (() => void) | null = null;
+let authContextUpdateUser: ((user: any) => void) | null = null;
+
+/**
+ * AuthContext와 연동을 위한 콜백 등록
+ */
+export const setAuthCallbacks = (logout: () => void, updateUser: (user: any) => void) => {
+  authContextLogout = logout;
+  authContextUpdateUser = updateUser;
+};
 
 /**
  * Axios 인터셉터 설정
@@ -42,20 +54,36 @@ export const setupAxiosInterceptors = () => {
           const newToken = await authService.refreshToken();
           console.log('토큰 리프레시 성공');
           
+          // JWT에서 사용자 정보 추출하여 AuthContext 업데이트
+          const updatedUser = extractUserFromToken(newToken);
+          if (updatedUser && authContextUpdateUser) {
+            authContextUpdateUser(updatedUser);
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            console.log('사용자 정보 동기화 완료', updatedUser);
+          } else {
+            console.warn('토큰에서 사용자 정보 추출 실패, 기존 사용자 정보 유지');
+          }
+          
           // 원래 요청에 새 토큰 적용하여 재시도
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
           return axios(originalRequest);
         } catch (refreshError) {
           // 토큰 갱신 실패 시 로그아웃 처리
           console.warn('토큰 갱신 실패, 로그아웃 처리');
-          localStorage.removeItem('jwt_token');
-          localStorage.removeItem('refresh_token');
-          localStorage.removeItem('user');
-          delete axios.defaults.headers.common['Authorization'];
           
-          // 로그인 페이지로 리다이렉트 (현재 페이지가 로그인 필수 페이지인 경우만)
-          if (window.location.pathname !== '/login' && window.location.pathname !== '/signup') {
-            window.location.href = '/login';
+          // AuthContext를 통한 로그아웃 처리
+          if (authContextLogout) {
+            authContextLogout();
+          } else {
+            // 폴백: 직접 처리
+            localStorage.removeItem('jwt_token');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('user');
+            delete axios.defaults.headers.common['Authorization'];
+            
+            if (window.location.pathname !== '/login' && window.location.pathname !== '/signup') {
+              window.location.href = '/login';
+            }
           }
           return Promise.reject(refreshError);
         }
@@ -64,13 +92,20 @@ export const setupAxiosInterceptors = () => {
       // refresh 요청에서 401이 발생한 경우 (리프레시 토큰도 만료)
       if (error.response?.status === 401 && isRefreshRequest) {
         console.warn('리프레시 토큰도 만료됨, 로그아웃 처리');
-        localStorage.removeItem('jwt_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('user');
-        delete axios.defaults.headers.common['Authorization'];
         
-        if (window.location.pathname !== '/login' && window.location.pathname !== '/signup') {
-          window.location.href = '/login';
+        // AuthContext를 통한 로그아웃 처리
+        if (authContextLogout) {
+          authContextLogout();
+        } else {
+          // 폴백: 직접 처리
+          localStorage.removeItem('jwt_token');
+          localStorage.removeItem('refresh_token');
+          localStorage.removeItem('user');
+          delete axios.defaults.headers.common['Authorization'];
+          
+          if (window.location.pathname !== '/login' && window.location.pathname !== '/signup') {
+            window.location.href = '/login';
+          }
         }
       }
 
