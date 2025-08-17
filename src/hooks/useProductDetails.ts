@@ -19,6 +19,7 @@ export interface ProductDetailsData {
   created_at: string;
   updated_at: string;
   status: 'processing' | 'completed' | 'failed';
+  html_list?: string[]; // 생성된 HTML 블록 리스트
 }
 
 export interface UseProductDetailsOptions {
