@@ -165,13 +165,7 @@ class NotificationService {
   private handleNotificationData(notification: Notification, data: any) {
     if (notification.service_type === 'product-details') {
       console.log('상품 상세 정보:', data);
-      
-      if (notification.action_url) {
-        const shouldNavigate = confirm(`${notification.title}\n결과를 확인하시겠습니까?`);
-        if (shouldNavigate) {
-          window.location.href = notification.action_url;
-        }
-      }
+      // NotificationProvider에서 처리하므로 여기서는 로그만 출력
     }
   }
 

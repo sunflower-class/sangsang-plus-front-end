@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { notificationService, type Notification } from '@/services/notificationService';
 import useProductDetails from '@/hooks/useProductDetails';
@@ -28,6 +29,7 @@ interface NotificationProviderProps {
 
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isConnected, setIsConnected] = useState(false);
@@ -73,10 +75,26 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       try {
         const productData = await fetchByUrl(notification.data_url, user?.id);
         
-        if (productData && notification.action_url) {
+        if (productData && productData.html_list && productData.html_list.length > 0) {
           setTimeout(() => {
             const shouldNavigate = confirm(
-              `${notification.title}\n상품 상세페이지가 생성되었습니다. 결과를 확인하시겠습니까?`
+              `${notification.title}\n상품 상세페이지가 생성되었습니다. 에디터에서 확인하시겠습니까?`
+            );
+            if (shouldNavigate) {
+              // HTML 데이터를 섹션별로 처리
+              const processedHtml = productData.html_list.map((htmlBlock: string, index: number) => {
+                return `<section id="block-${index}">${htmlBlock}</section>`;
+              }).join('\n');
+              
+              // React Router로 에디터 페이지로 이동
+              navigate('/editor/new-page', { state: { generatedHtml: processedHtml } });
+            }
+          }, 1000);
+        } else if (notification.action_url) {
+          // 데이터가 없으면 기존 action_url로 이동
+          setTimeout(() => {
+            const shouldNavigate = confirm(
+              `${notification.title}\n결과를 확인하시겠습니까?`
             );
             if (shouldNavigate) {
               window.open(notification.action_url, '_blank');
