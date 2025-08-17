@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/misc/dropdown-menu';
 import { Sparkles, User, LogOut, Plus, HelpCircle, Home } from 'lucide-react';
 import logo from '@/assets/images/logo.png';
+import NotificationBell from '@/components/notifications/NotificationBell';
 
 
 const Header = () => {
@@ -94,6 +95,7 @@ const Header = () => {
 
         {/* User Actions */}
         <div className="flex items-center space-x-4">
+          {user && <NotificationBell />}
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

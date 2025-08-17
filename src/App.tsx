@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import Header from "./components/ImprovedHeader";
 import Footer from "./components/Footer";
+import { NotificationProvider } from "./components/notifications/NotificationProvider";
 import Index from "./pages/Root/Index";
 import Login from "./pages/Auth/Login";
 import Signup from "./pages/Auth/Signup";
@@ -32,8 +33,9 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
-        <Toaster />
-        <Sonner 
+        <NotificationProvider>
+          <Toaster />
+          <Sonner 
           toastOptions={{
             classNames: {
               toast: 'bg-background text-foreground border-border shadow-lg',
@@ -82,6 +84,7 @@ const App = () => (
             <Footer />
           </div>
         </BrowserRouter>
+        </NotificationProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
