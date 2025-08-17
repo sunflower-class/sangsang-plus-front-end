@@ -6,7 +6,7 @@ WORKDIR /app
 ARG VITE_API_URL=https://oauth.buildingbite.com
 ARG VITE_GENERATE_URL=https://oauth.buildingbite.com/api/generation
 ARG VITE_REVIEW_URL=https://oauth.buildingbite.com/api/review
-ARG VITE_QUESTION_URL=https://oauth.buildingbite.com/api/customer
+ARG VITE_QUESTION_URL=https://oauth.buildingbite.com/api/management
 ARG VITE_USER_URL=https://oauth.buildingbite.com/api/users
 ARG VITE_ABTEST_URL=https://oauth.buildingbite.com/api/abtest
 
