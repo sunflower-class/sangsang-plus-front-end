@@ -50,7 +50,7 @@ class NotificationService {
     if (window.location.hostname === 'localhost') {
       return 'http://localhost:8080';
     } else {
-      return 'https://oauth.buildingbite.com/notifications';
+      return 'https://oauth.buildingbite.com';
     }
   }
 
