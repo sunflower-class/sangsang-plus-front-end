@@ -20,13 +20,22 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateHTML } from '../../apis/htmlGenerate.js';
+import { generateService, type ProcessingMode, type GenerateRequest } from '@/services/generateService';
+import { useNotifications } from '@/components/notifications/NotificationProvider';
+import { useAuth } from '@/contexts/AuthContext';
+import ProcessingModeSelector from '@/components/generate/ProcessingModeSelector';
 
 const Generate = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { fetchProductDetails } = useNotifications();
+  
   const [currentStep, setCurrentStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
   const [generationStatus, setGenerationStatus] = useState('');
+  const [processingMode, setProcessingMode] = useState<ProcessingMode>('auto');
+  const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     productName: '',
@@ -82,34 +91,89 @@ const Generate = () => {
     setGenerationProgress(20);
 
     try {
-      // 이미지 URL은 현재 임시로 빈 문자열로 전달합니다. 실제 구현에서는 이미지 업로드 후 반환되는 URL을 사용해야 합니다.
-      const productImageUrl = formData.images.length > 0 ? URL.createObjectURL(formData.images[0]) : "";
-      const htmlList = await generateHTML(formData.productName, productImageUrl);
-
-      setGenerationStatus('HTML 생성이 완료되었습니다.');
-      setGenerationProgress(100);
+      // 생성 요청 데이터 준비
+      const productImageUrl = formData.images.length > 0 ? URL.createObjectURL(formData.images[0]) : undefined;
       
-      // 에디터 페이지로 생성된 HTML과 함께 이동
-      if (htmlList && htmlList.length > 0) {
-        const processedHtml = htmlList.map((htmlBlock, index) => {
-          // 에디터가 블록을 인식하고 편집할 수 있도록 section 태그와 고유 ID를 추가합니다.
-          return `<section id="block-${index}">${htmlBlock}</section>`;
-        }).join('\n');
+      const request: GenerateRequest = {
+        product_data: formData.productName,
+        product_image_url: productImageUrl,
+        features: formData.features,
+        target_customer: formData.targetCustomer,
+        tone: formData.tone,
+        user_id: user?.id,
+      };
 
-        navigate('/editor/new-page', { state: { generatedHtml: processedHtml } });
-        toast.success('상세페이지가 성공적으로 생성되었습니다!');
-      } else {
-        toast.error('생성된 HTML이 없거나 형식이 올바르지 않습니다.');
-        setCurrentStep(1);
+      // 새로운 generateService 사용
+      const response = await generateService.generateHTML(request, {
+        mode: processingMode,
+        onProgress: (progress, status) => {
+          setGenerationProgress(progress);
+          setGenerationStatus(status);
+        },
+        onComplete: (htmlList) => {
+          handleGenerationComplete(htmlList);
+        },
+        onError: (error) => {
+          handleGenerationError(error);
+        },
+        maxWaitTime: 300000, // 5분
+      });
+
+      // 202 Accepted인 경우 (비동기 처리)
+      if (response.data?.task_id) {
+        setCurrentTaskId(response.data.task_id);
+        
+        if (processingMode === 'async') {
+          // 비동기 모드: 즉시 대시보드로 이동
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 2000);
+        }
+        // wait 모드나 auto 모드는 onComplete 콜백에서 처리
       }
 
     } catch (error) {
-      console.error('Error generating HTML:', error);
-      toast.error('HTML 생성 중 오류가 발생했습니다.');
-      setIsGenerating(false);
-      setCurrentStep(1);
+      handleGenerationError(error as Error);
     }
   };
+
+  const handleGenerationComplete = (htmlList: string[]) => {
+    setGenerationStatus('HTML 생성이 완료되었습니다.');
+    setGenerationProgress(100);
+    
+    if (htmlList && htmlList.length > 0) {
+      const processedHtml = htmlList.map((htmlBlock, index) => {
+        return `<section id="block-${index}">${htmlBlock}</section>`;
+      }).join('\n');
+
+      // 완료 단계로 이동 후 에디터로 리다이렉트
+      setCurrentStep(3);
+      setTimeout(() => {
+        navigate('/editor/new-page', { state: { generatedHtml: processedHtml } });
+        toast.success('상세페이지가 성공적으로 생성되었습니다!');
+      }, 1500);
+    } else {
+      handleGenerationError(new Error('생성된 HTML이 없거나 형식이 올바르지 않습니다.'));
+    }
+  };
+
+  const handleGenerationError = (error: Error) => {
+    console.error('Error generating HTML:', error);
+    toast.error(error.message || 'HTML 생성 중 오류가 발생했습니다.');
+    setIsGenerating(false);
+    setCurrentStep(1);
+    setGenerationProgress(0);
+    setGenerationStatus('');
+  };
+
+  // 컴포넌트 언마운트 시 폴링 정리
+  React.useEffect(() => {
+    return () => {
+      if (currentTaskId) {
+        generateService.stopPolling(currentTaskId);
+      }
+    };
+  }, [currentTaskId]);
 
   const renderStepIndicator = () => (
     <div className="flex items-center justify-center mb-8">
@@ -278,6 +342,12 @@ const Generate = () => {
           )}
         </div>
 
+        <ProcessingModeSelector 
+          value={processingMode}
+          onChange={setProcessingMode}
+          className="mb-6"
+        />
+
         <Button 
           onClick={handleGenerate}
           className="w-full btn-primary h-12 text-lg"
@@ -290,18 +360,69 @@ const Generate = () => {
     </Card>
   );
 
-  const renderGenerating = () => (
-    <Card className="max-w-lg mx-auto">
-      <CardContent className="p-8 text-center">
-        <div className="flex items-center justify-center w-16 h-16 bg-gradient-primary rounded-full mx-auto mb-6">
-          <Loader2 className="h-8 w-8 text-white animate-spin" />
-        </div>
-        
-        <h3 className="text-xl font-semibold mb-2">AI가 상세페이지를 생성하고 있습니다</h3>
-        <p className="text-muted-foreground mb-6">{generationStatus}</p>
-        
-        <Progress value={generationProgress} className="mb-4" />
-        <p className="text-sm text-muted-foreground">{generationProgress}% 완료</p>
+  const renderGenerating = () => {
+    const getModeMessage = () => {
+      switch (processingMode) {
+        case 'wait':
+          return {
+            title: 'AI가 상세페이지를 생성하고 있습니다',
+            subtitle: '완료될 때까지 잠시만 기다려주세요',
+            showProgress: true
+          };
+        case 'async':
+          return {
+            title: '상세페이지 생성 요청이 접수되었습니다',
+            subtitle: '백그라운드에서 처리되며, 완료되면 알림으로 안내해드립니다',
+            showProgress: false
+          };
+        case 'auto':
+          return {
+            title: 'AI가 상세페이지를 생성하고 있습니다',
+            subtitle: currentTaskId ? '백그라운드에서 처리 중입니다' : '잠시만 기다려주세요',
+            showProgress: !currentTaskId
+          };
+        default:
+          return {
+            title: 'AI가 상세페이지를 생성하고 있습니다',
+            subtitle: generationStatus,
+            showProgress: true
+          };
+      }
+    };
+
+    const modeMessage = getModeMessage();
+
+    return (
+      <Card className="max-w-lg mx-auto">
+        <CardContent className="p-8 text-center">
+          <div className="flex items-center justify-center w-16 h-16 bg-gradient-primary rounded-full mx-auto mb-6">
+            {processingMode === 'async' && currentTaskId ? (
+              <CheckCircle className="h-8 w-8 text-white" />
+            ) : (
+              <Loader2 className="h-8 w-8 text-white animate-spin" />
+            )}
+          </div>
+          
+          <h3 className="text-xl font-semibold mb-2">{modeMessage.title}</h3>
+          <p className="text-muted-foreground mb-6">{modeMessage.subtitle}</p>
+          
+          {modeMessage.showProgress && (
+            <>
+              <Progress value={generationProgress} className="mb-4" />
+              <p className="text-sm text-muted-foreground">{generationProgress}% 완료</p>
+            </>
+          )}
+
+          {processingMode === 'async' && currentTaskId && (
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+              <p className="text-sm text-blue-700">
+                <strong>작업 ID:</strong> {currentTaskId}
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                대시보드에서 진행상황을 확인할 수 있습니다
+              </p>
+            </div>
+          )}
         
         <div className="grid grid-cols-3 gap-4 mt-8">
           <div className="text-center space-y-2">
