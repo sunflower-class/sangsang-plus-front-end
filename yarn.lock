@@ -918,6 +918,27 @@
   dependencies:
     "@tanstack/query-core" "5.83.0"
 
+"@tosspayments/payment__types@1.69.0":
+  version "1.69.0"
+  resolved "https://registry.npmjs.org/@tosspayments/payment__types/-/payment__types-1.69.0.tgz"
+  integrity sha512-EbU36vLEWfhRpX/g4V0DyRiUmTkNeeVDYjJamD9aJiLmRbLl9PVdXi5QOQTMYma2RGRgA8drHY4yDMsjvKFwCg==
+  dependencies:
+    "@tosspayments/sdk-constants" "^0.2.2"
+
+"@tosspayments/payment-sdk@^1.9.1":
+  version "1.9.1"
+  resolved "https://registry.npmjs.org/@tosspayments/payment-sdk/-/payment-sdk-1.9.1.tgz"
+  integrity sha512-OzDG2kOGOrb5JRvprR8R/mQzXFNnLW/6X09uLY1KF4+O7ASu6LrMoFCERd+WeAJMtRAARkclGDcJ/GSu+OHzzg==
+  dependencies:
+    "@tosspayments/payment__types" "1.69.0"
+
+"@tosspayments/sdk-constants@^0.2.2":
+  version "0.2.2"
+  resolved "https://registry.npmjs.org/@tosspayments/sdk-constants/-/sdk-constants-0.2.2.tgz"
+  integrity sha512-qTIcD9JnVtN65/yiW5sPAlvK5fpQtDluv4IEyslubncbQLQKE+ePSnGZU1fLNPxcchv6QTnwmgj9Ndm6EN/Ymg==
+  dependencies:
+    type-fest "^2.11.2"
+
 "@types/d3-array@^3.0.3":
   version "3.2.1"
   resolved "https://registry.npmjs.org/@types/d3-array/-/d3-array-3.2.1.tgz"
@@ -2893,6 +2914,11 @@ type-check@^0.4.0, type-check@~0.4.0:
   integrity sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==
   dependencies:
     prelude-ls "^1.2.1"
+
+type-fest@^2.11.2:
+  version "2.19.0"
+  resolved "https://registry.npmjs.org/type-fest/-/type-fest-2.19.0.tgz"
+  integrity sha512-RAH822pAdBgcNMAfWnCBU3CFZcfZ/i1eZjwFU/dsLKumyuuP3niueg2UAukXYF0E2AAoc82ZSSf9J0WQBinzHA==
 
 typescript-eslint@^8.0.1:
   version "8.36.0"

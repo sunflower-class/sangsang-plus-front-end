@@ -24,6 +24,7 @@ import PrivacyPolicyPage from "./pages/Policy/PrivacyPolicyPage";
 import CookiePolicyPage from "./pages/Policy/CookiePolicyPage";
 import ABTest from "./pages/ABTest/ABTest";
 import ABTestManager from "./pages/ABTest/ABTestManager";
+import Payments from "./pages/Payments/Payments";
 
 const queryClient = new QueryClient();
 
@@ -60,8 +61,6 @@ const App = () => (
                 <Route path="/cookie-policy" element={<CookiePolicyPage />} />
 
                 <Route path="/generate" element={<Generate />} />
-                <Route path="/editor/:pageId" element={<Editor />} />
-
                 {/* Protected Routes */}
                 <Route element={<ProtectedRoute />}>
                   <Route path="/dashboard" element={<Dashboard />} />
@@ -69,6 +68,7 @@ const App = () => (
                   <Route path="/review-analysis" element={<ReviewAnalysis />} />
                   <Route path="/review-analysis-result" element={<ReviewAnalysisResult />} />
                   <Route path="/profile" element={<Profile />} />
+                  <Route path="/payments" element={<Payments />} />
                 </Route>
 
                 <Route path="*" element={<NotFound />} />
