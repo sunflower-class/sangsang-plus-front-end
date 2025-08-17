@@ -455,6 +455,7 @@ const Generate = () => {
       </CardContent>
     </Card>
   );
+  };
 
   const renderComplete = () => (
     <Card className="max-w-lg mx-auto">
