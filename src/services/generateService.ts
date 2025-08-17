@@ -44,7 +44,16 @@ class GenerateService {
     try {
       console.log('상세페이지 생성 요청:', { request, options });
       
-      const response = await axios.post<GenerateResponse>(API_URL, request);
+      // 헤더 설정 (X-User-Id 필수)
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (request.user_id) {
+        headers['X-User-Id'] = request.user_id;
+      }
+      
+      const response = await axios.post<GenerateResponse>(API_URL, request, { headers });
       
       // 200 OK - 즉시 완료된 경우 (기존 동기 방식)
       if (response.status === 200 && response.data.success && response.data.data?.html_list) {
@@ -260,10 +269,11 @@ export const generateService = new GenerateService();
 export default generateService;
 
 // 기존 함수와의 호환성을 위한 래퍼
-export const generateHTML = async (productData: string, productImageUrl?: string): Promise<string[]> => {
+export const generateHTML = async (productData: string, productImageUrl?: string, userId?: string): Promise<string[]> => {
   const request: GenerateRequest = {
     product_data: productData,
     product_image_url: productImageUrl,
+    user_id: userId,
   };
 
   const response = await generateService.generateHTML(request, {

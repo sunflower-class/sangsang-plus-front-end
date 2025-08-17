@@ -19,7 +19,6 @@ import {
   Image as ImageIcon
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { generateHTML } from '../../apis/htmlGenerate.js';
 import { generateService, type ProcessingMode, type GenerateRequest } from '@/services/generateService';
 import { useNotifications } from '@/components/notifications/NotificationProvider';
 import { useAuth } from '@/contexts/AuthContext';

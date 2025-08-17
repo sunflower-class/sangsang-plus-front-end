@@ -15,7 +15,7 @@ http://localhost:8080/api/notifications
 
 **운영 환경:**
 ```
-https://api.buildingbite.com/notifications/api/notifications
+https://oauth.buildingbite.com/notifications/api/notifications
 ```
 또는
 ```
@@ -47,7 +47,7 @@ GET /api/notifications/{user_id}?limit=20&offset=0
         "created_at": "2024-01-01T12:00:00",
         "action_url": "/results/12345",
         "action_label": "결과 보기",
-        "data_url": "https://api.buildingbite.com/product-details/api/generation/product-details/12345",
+        "data_url": "https://oauth.buildingbite.com/product-details/api/generation/product-details/12345",
         "data_id": "12345"
       }
     ],
@@ -96,7 +96,7 @@ class NotificationService {
       return 'http://localhost:8080';
     } else {
       // 운영 환경 - 실제 notification-service URL로 수정 필요
-      return 'https://api.buildingbite.com/notifications';
+      return 'https://oauth.buildingbite.com/notifications';
     }
   }
 
@@ -343,7 +343,7 @@ const NotificationComponent = ({ userId }) => {
     try {
       const baseUrl = window.location.hostname === 'localhost' 
         ? 'http://localhost:8080' 
-        : 'https://api.buildingbite.com/notifications';
+        : 'https://oauth.buildingbite.com/notifications';
       const response = await fetch(`${baseUrl}/api/notifications/${userId}`);
       const data = await response.json();
       
@@ -363,7 +363,7 @@ const NotificationComponent = ({ userId }) => {
     // SSE 연결
     const baseUrl = window.location.hostname === 'localhost' 
       ? 'http://localhost:8080' 
-      : 'https://api.buildingbite.com/notifications';
+      : 'https://oauth.buildingbite.com/notifications';
     const eventSource = new EventSource(`${baseUrl}/api/notifications/stream/${userId}`);
     
     eventSource.onopen = () => setConnected(true);
@@ -395,7 +395,7 @@ const NotificationComponent = ({ userId }) => {
     try {
       const baseUrl = window.location.hostname === 'localhost' 
         ? 'http://localhost:8080' 
-        : 'https://api.buildingbite.com/notifications';
+        : 'https://oauth.buildingbite.com/notifications';
       const response = await fetch(`${baseUrl}/api/notifications/${notificationId}/read?user_id=${userId}`, {
         method: 'PUT'
       });
@@ -581,14 +581,14 @@ export default NotificationComponent;
 
 2. **Ingress/Load Balancer 설정**
    - notification-service를 외부에서 접근 가능하도록 노출
-   - 예: `https://api.buildingbite.com/notifications`
+   - 예: `https://oauth.buildingbite.com/notifications`
 
 3. **환경별 URL 설정**
    ```javascript
    // 환경 변수나 설정 파일 사용 권장
    const config = {
      development: 'http://localhost:8080',
-     production: 'https://api.buildingbite.com/notifications'
+     production: 'https://oauth.buildingbite.com/notifications'
    };
    
    const baseUrl = config[process.env.NODE_ENV] || config.production;
@@ -596,4 +596,4 @@ export default NotificationComponent;
 
 4. **프록시 설정 (대안)**
    - 프론트엔드 서버에서 API 프록시 설정
-   - `/api/notifications/*` → `https://api.buildingbite.com/notifications/api/notifications/*`
+   - `/api/notifications/*` → `https://oauth.buildingbite.com/notifications/api/notifications/*`
