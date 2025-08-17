@@ -13,7 +13,7 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/auth-refactor' || github.ref == 'refs/heads/feature/realtime-notifications'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/realtime-notifications'
     
     steps:
     - name: Checkout code
@@ -49,9 +49,10 @@ jobs:
           BUILDKIT_INLINE_CACHE=1
           VITE_API_URL=${{ secrets.VITE_API_URL || 'https://oauth.buildingbite.com' }}
           VITE_GENERATE_URL=${{ secrets.VITE_GENERATE_URL || 'https://oauth.buildingbite.com/api/generation' }}
-          VITE_REVIEW_URL=${{ secrets.VITE_REVIEW_URL || 'https://oauth.buildingbite.com/api' }}
-          VITE_QUESTION_URL=${{ secrets.VITE_QUESTION_URL || 'https://oauth.buildingbite.com/api/management' }}
-          VITE_USER_URL=${{ secrets.VITE_USER_URL || 'https://oauth.buildingbite.com' }}
+          VITE_REVIEW_URL=${{ secrets.VITE_REVIEW_URL || 'https://oauth.buildingbite.com/api/review' }}
+          VITE_QUESTION_URL=${{ secrets.VITE_QUESTION_URL || 'https://oauth.buildingbite.com/api/customer' }}
+          VITE_USER_URL=${{ secrets.VITE_USER_URL || 'https://oauth.buildingbite.com/api/users' }}
+          VITE_ABTEST_URL=${{ secrets.VITE_ABTEST_URL || 'https://oauth.buildingbite.com/api/abtest' }}
 
   deploy:
     needs: build-and-push
