@@ -2,9 +2,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, feature/auth-refactor ]
+    branches: [ main, feature/realtime-notifications ]
   pull_request:
-    branches: [ main, feature/auth-refactor ]
+    branches: [ main, feature/realtime-notifications ]
 
 env:
   DOCKER_IMAGE: buildingbite/sangsangplus-frontend
