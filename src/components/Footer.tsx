@@ -43,6 +43,9 @@ const Footer = () => {
               <Link to="/qna" className="block text-muted-foreground hover:text-primary transition-colors text-sm">
                 Q&A 게시판
               </Link>
+              <Link to="/abtest" className="block text-muted-foreground hover:text-primary transition-colors text-sm">
+                A/B 테스트
+              </Link>
             </div>
           </div>
 

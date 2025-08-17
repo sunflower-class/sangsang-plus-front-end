@@ -50,51 +50,50 @@ const ReviewAnalysisResult: React.FC = () => {
       
       console.log('원본 API 응답:', rawApiResult);
       
-      // 백엔드에서 오는 응답 구조에 맞게 데이터 추출
-      let apiResult: Record<string, unknown>;
-      
-      if (rawApiResult.report) {
-        // 백엔드 응답에서 report 객체 추출 및 변환
-        const report = rawApiResult.report;
-        
-        // 키워드 추출
-        const keywords = report.summary.common_key_points || [];
-        
-        // 키워드를 간단한 형태로 변환
+      // --- 공통 변환 함수 (report 또는 analysis_report 지원) ---
+      const normalizeApiResult = (raw: any) => {
+        const report = raw.report || raw.analysis_report; // 두 가지 키 모두 지원
+        if (!report || !report.summary) return raw; // 이미 정규화 되었거나 구조 다름
+
+        const summary = report.summary;
+        const sentimentDist = summary.sentiment_distribution || {};
+        const keywords: string[] = summary.common_key_points || [];
         const keywordsWithSentiment = keywords.map((keyword: string) => ({
           keyword,
           sentiment: 'neutral' as const
         }));
-        
-        apiResult = {
+
+        return {
           product_name: report.product_name,
-          total_reviews: report.summary.total_reviews,
-          average_rating: report.summary.average_rating,
+            // summary.total_reviews 는 전체 리뷰 수
+          total_reviews: summary.total_reviews,
+          average_rating: summary.average_rating,
           overall_sentiment: {
-            positive: report.summary.sentiment_distribution.긍정 || 0,
-            negative: report.summary.sentiment_distribution.부정 || 0,
-            neutral: report.summary.sentiment_distribution.중립 || 0
+            positive: sentimentDist['긍정'] || sentimentDist['positive'] || 0,
+            negative: sentimentDist['부정'] || sentimentDist['negative'] || 0,
+            neutral: sentimentDist['중립'] || sentimentDist['neutral'] || 0
           },
           top_keywords: keywordsWithSentiment,
           insights: {
-            strengths: report.trends.positive_aspects || [],
-            weaknesses: report.trends.key_issues || [],
+            strengths: report.trends?.positive_aspects || [],
+            weaknesses: report.trends?.key_issues || [],
             recommendations: report.recommendations || []
           },
-          individual_results: report.individual_analyses?.map((analysis: Record<string, unknown>, index: number) => ({
+          individual_results: (report.individual_analyses || []).map((analysis: any, index: number) => ({
             review_id: `review_${index}`,
-            sentiment: analysis.sentiment === '긍정' ? 'positive' : 
-                     analysis.sentiment === '부정' ? 'negative' : 'neutral',
-            confidence: (analysis.sentiment_score as number) || 0.5,
-            keywords: (analysis.key_points as string[]) || [],
+            sentiment: analysis.sentiment === '긍정' ? 'positive' : analysis.sentiment === '부정' ? 'negative' : 'neutral',
+            confidence: analysis.sentiment_score ?? 0.5,
+            keywords: analysis.key_points || [],
             summary: `분석 결과: ${analysis.sentiment}`,
-            rating_prediction: (analysis.overall_rating as number) || 0
-          })) || []
+            rating_prediction: analysis.overall_rating || 0
+          }))
         };
-      } else {
-        // 이미 올바른 형식인 경우
-        apiResult = rawApiResult;
-      }
+      };
+
+      // 변환 적용: report 또는 analysis_report 있으면 정규화
+      const apiResult: Record<string, unknown> = (rawApiResult.report || rawApiResult.analysis_report)
+        ? normalizeApiResult(rawApiResult)
+        : rawApiResult;
       
       console.log('변환된 분석 결과:', apiResult);
       setAnalysisResult(apiResult);

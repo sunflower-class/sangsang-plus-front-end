@@ -22,6 +22,8 @@ import AdminDashboard from "./pages/Admin/AdminDashboard";
 import TermsOfServicePage from "./pages/Policy/TermsOfServicePage";
 import PrivacyPolicyPage from "./pages/Policy/PrivacyPolicyPage";
 import CookiePolicyPage from "./pages/Policy/CookiePolicyPage";
+import ABTest from "./pages/ABTest/ABTest";
+import ABTestManager from "./pages/ABTest/ABTestManager";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +51,8 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
+                <Route path="/abtest" element={<ABTest />} />
+                <Route path="/abtest/manage" element={<ABTestManager />} />
                 
                 {/* Policy Pages */}
                 <Route path="/terms-of-service" element={<TermsOfServicePage />} />
