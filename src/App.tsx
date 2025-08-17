@@ -36,44 +36,46 @@ const AppWithTokenRefresh = () => {
   
   return (
     <BrowserRouter>
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-1">
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/abtest" element={<ABTest />} />
-            <Route path="/abtest/manage" element={<ABTestManager />} />
-            
-            {/* Policy Pages */}
-            <Route path="/terms-of-service" element={<TermsOfServicePage />} />
-            <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
-            <Route path="/cookie-policy" element={<CookiePolicyPage />} />
+      <NotificationProvider>
+        <div className="min-h-screen flex flex-col">
+          <Header />
+          <main className="flex-1">
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/abtest" element={<ABTest />} />
+              <Route path="/abtest/manage" element={<ABTestManager />} />
+              
+              {/* Policy Pages */}
+              <Route path="/terms-of-service" element={<TermsOfServicePage />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+              <Route path="/cookie-policy" element={<CookiePolicyPage />} />
 
-            <Route path="/generate" element={<Generate />} />
-            {/* Protected Routes */}
-            <Route element={<ProtectedRoute />}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/editor/new-page" element={<Editor />} />
-              <Route path="/editor/:pageId" element={<Editor />} />
-              <Route path="/qna" element={<QnA />} />
-              <Route path="/review-analysis" element={<ReviewAnalysis />} />
-              <Route path="/review-analysis-result" element={<ReviewAnalysisResult />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/payments" element={<Payments />} />
-            </Route>
+              <Route path="/generate" element={<Generate />} />
+              {/* Protected Routes */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/editor/new-page" element={<Editor />} />
+                <Route path="/editor/:pageId" element={<Editor />} />
+                <Route path="/qna" element={<QnA />} />
+                <Route path="/review-analysis" element={<ReviewAnalysis />} />
+                <Route path="/review-analysis-result" element={<ReviewAnalysisResult />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/payments" element={<Payments />} />
+              </Route>
 
-            <Route path="*" element={<NotFound />} />
+              <Route path="*" element={<NotFound />} />
 
-            {/* Admin Protected Routes */}
-            <Route element={<ProtectedRoute adminOnly={true} />}>
-              <Route path="/sangsangplus-admin-dashboard-portal" element={<AdminDashboard />} />
-            </Route>
-          </Routes>
-        </main>
-        <Footer />
-      </div>
+              {/* Admin Protected Routes */}
+              <Route element={<ProtectedRoute adminOnly={true} />}>
+                <Route path="/sangsangplus-admin-dashboard-portal" element={<AdminDashboard />} />
+              </Route>
+            </Routes>
+          </main>
+          <Footer />
+        </div>
+      </NotificationProvider>
     </BrowserRouter>
   );
 };
@@ -82,21 +84,19 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
-        <NotificationProvider>
-          <Toaster />
-          <Sonner 
-            toastOptions={{
-              classNames: {
-                toast: 'bg-background text-foreground border-border shadow-lg',
-                title: 'text-sm font-semibold',
-                description: 'text-sm',
-                actionButton: 'bg-primary text-primary-foreground',
-                cancelButton: 'bg-muted text-muted-foreground',
-              },
-            }}
-          />
-          <AppWithTokenRefresh />
-        </NotificationProvider>
+        <Toaster />
+        <Sonner 
+          toastOptions={{
+            classNames: {
+              toast: 'bg-background text-foreground border-border shadow-lg',
+              title: 'text-sm font-semibold',
+              description: 'text-sm',
+              actionButton: 'bg-primary text-primary-foreground',
+              cancelButton: 'bg-muted text-muted-foreground',
+            },
+          }}
+        />
+        <AppWithTokenRefresh />
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
