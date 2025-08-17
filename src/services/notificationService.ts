@@ -37,7 +37,8 @@ class NotificationService {
   private eventSource: EventSource | null = null;
   private userId: string | null = null;
   private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
+  private maxReconnectAttempts = 10; // 재연결 시도 횟수 증가
+  private reconnectTimeout: NodeJS.Timeout | null = null;
   private onNotificationReceived?: (notification: Notification) => void;
   private onUnreadCountChanged?: (count: number) => void;
   private onConnectionStateChanged?: (connected: boolean) => void;
@@ -74,29 +75,49 @@ class NotificationService {
       return;
     }
 
+    // 기존 연결이 있으면 정리
+    this.disconnect();
+
     const url = `${this.getBaseUrl()}/api/notifications/stream/${this.userId}`;
-    this.eventSource = new EventSource(url);
+    
+    try {
+      this.eventSource = new EventSource(url);
 
-    this.eventSource.onopen = () => {
-      console.log('✅ 실시간 알림 연결 성공');
-      this.reconnectAttempts = 0;
-      this.onConnectionStateChanged?.(true);
-    };
+      this.eventSource.onopen = () => {
+        console.log('✅ 실시간 알림 연결 성공');
+        this.reconnectAttempts = 0;
+        this.onConnectionStateChanged?.(true);
+        
+        // 성공 시 재연결 타이머 정리
+        if (this.reconnectTimeout) {
+          clearTimeout(this.reconnectTimeout);
+          this.reconnectTimeout = null;
+        }
+      };
 
-    this.eventSource.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        this.handleNotification(data);
-      } catch (error) {
-        console.error('알림 데이터 파싱 오류:', error);
-      }
-    };
+      this.eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          this.handleNotification(data);
+        } catch (error) {
+          console.error('알림 데이터 파싱 오류:', error);
+        }
+      };
 
-    this.eventSource.onerror = (error) => {
-      console.error('❌ SSE 연결 오류:', error);
-      this.onConnectionStateChanged?.(false);
+      this.eventSource.onerror = (error) => {
+        console.warn('⚠️ SSE 연결 오류 발생, 재연결 준비 중...', error);
+        this.onConnectionStateChanged?.(false);
+        
+        // EventSource의 readyState 확인
+        if (this.eventSource?.readyState === EventSource.CLOSED) {
+          console.log('SSE 연결이 닫혔습니다. 재연결을 시도합니다.');
+          this.handleReconnect();
+        }
+      };
+    } catch (error) {
+      console.error('SSE 연결 생성 실패:', error);
       this.handleReconnect();
-    };
+    }
   }
 
   private handleNotification(data: any) {
@@ -170,21 +191,42 @@ class NotificationService {
   }
 
   private handleReconnect() {
+    // 기존 타이머가 있으면 정리
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+    }
+
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
-      setTimeout(() => {
-        console.log(`재연결 시도 ${this.reconnectAttempts + 1}/${this.maxReconnectAttempts}`);
+      // 지수 백오프, 하지만 최대 5초로 제한
+      const delay = Math.min(Math.pow(2, this.reconnectAttempts) * 1000, 5000);
+      
+      console.log(`재연결 시도 ${this.reconnectAttempts + 1}/${this.maxReconnectAttempts} (${delay}ms 후)`);
+      
+      this.reconnectTimeout = setTimeout(() => {
         this.reconnectAttempts++;
         this.connect();
-      }, Math.pow(2, this.reconnectAttempts) * 1000);
+      }, delay);
+    } else {
+      console.error('최대 재연결 시도 횟수에 도달했습니다. SSE 연결을 포기합니다.');
+      this.onConnectionStateChanged?.(false);
     }
   }
 
   disconnect() {
+    // 재연결 타이머 정리
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
+
     if (this.eventSource) {
       this.eventSource.close();
       this.eventSource = null;
       this.onConnectionStateChanged?.(false);
     }
+    
+    // 재연결 시도 카운터 리셋
+    this.reconnectAttempts = 0;
   }
 
   async fetchNotifications(limit = 20, offset = 0): Promise<NotificationResponse | null> {
