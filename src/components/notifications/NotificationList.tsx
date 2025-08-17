@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/layout/separator';
 import { Badge } from '@/components/ui/data-display/badge';
 import { cn } from '@/lib/utils';
 import { type Notification } from '@/services/notificationService';
+import { useNotifications } from './NotificationProvider';
 
 interface NotificationListProps {
   notifications: Notification[];
@@ -19,7 +20,8 @@ const NotificationList: React.FC<NotificationListProps> = ({
   onMarkAsRead,
   onDelete,
   isConnected,
-}) => {
+) => {
+  const { handleNotificationClick } = useNotifications();
   const getMessageTypeIcon = (type: string) => {
     switch (type) {
       case 'success':
@@ -139,11 +141,15 @@ const NotificationList: React.FC<NotificationListProps> = ({
                               variant="outline"
                               size="sm"
                               className="h-7 text-xs"
-                              onClick={() => {
+                              onClick={async () => {
+                                console.log('🔔 알림 버튼 클릭:', notification);
+                                
                                 if (notification.status === 'unread') {
                                   onMarkAsRead(notification.event_id);
                                 }
-                                window.open(notification.action_url, '_blank');
+                                
+                                // NotificationProvider의 통합 핸들러 사용
+                                await handleNotificationClick(notification);
                               }}
                             >
                               <ExternalLink className="h-3 w-3 mr-1" />
