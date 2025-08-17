@@ -123,10 +123,10 @@ const Generate = () => {
         setCurrentTaskId(response.data.task_id);
         
         if (processingMode === 'async') {
-          // 비동기 모드: 즉시 대시보드로 이동
-          setTimeout(() => {
-            navigate('/dashboard');
-          }, 2000);
+          // 비동기 모드: 완료 알림과 함께 안내
+          toast.info('생성이 완료되면 알림으로 안내해드립니다', {
+            description: '완료 시 /editor/new-page 에서 결과를 확인할 수 있습니다'
+          });
         }
         // wait 모드나 auto 모드는 onComplete 콜백에서 처리
       }
@@ -464,12 +464,21 @@ const Generate = () => {
         </div>
         
         <h3 className="text-xl font-semibold mb-2">생성 완료!</h3>
-        <p className="text-muted-foreground mb-6">
+        <p className="text-muted-foreground mb-4">
           AI가 매력적인 상세페이지를 성공적으로 생성했습니다
         </p>
         
+        <div className="bg-blue-50 rounded-lg p-4 mb-4">
+          <p className="text-sm text-blue-700 font-medium mb-2">
+            결과물 편집 페이지로 이동합니다
+          </p>
+          <p className="text-xs text-blue-600">
+            /editor/new-page 에서 생성된 HTML을 블록별로 수정할 수 있습니다
+          </p>
+        </div>
+        
         <div className="animate-pulse">
-          <p className="text-sm text-muted-foreground">에디터로 이동 중...</p>
+          <p className="text-sm text-muted-foreground">잠시만 기다려주세요...</p>
         </div>
       </CardContent>
     </Card>
