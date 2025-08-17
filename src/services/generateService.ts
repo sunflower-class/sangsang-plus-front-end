@@ -44,16 +44,9 @@ class GenerateService {
     try {
       console.log('상세페이지 생성 요청:', { request, options });
       
-      // 헤더 설정 (X-User-Id 필수)
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-      
-      if (request.user_id) {
-        headers['X-User-Id'] = request.user_id;
-      }
-      
-      const response = await axios.post<GenerateResponse>(API_URL, request, { headers });
+      // JWT 토큰은 axios 인터셉터에서 자동으로 추가됨
+      // Spring Gateway에서 JWT를 파싱해서 X-User-Id를 다운스트림으로 전달
+      const response = await axios.post<GenerateResponse>(API_URL, request);
       
       // 200 OK - 즉시 완료된 경우 (기존 동기 방식)
       if (response.status === 200 && response.data.success && response.data.data?.html_list) {

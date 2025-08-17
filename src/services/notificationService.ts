@@ -145,11 +145,9 @@ class NotificationService {
 
   async fetchNotificationData(notification: Notification) {
     try {
-      const response = await fetch(notification.data_url!, {
-        headers: {
-          'X-User-Id': this.userId!
-        }
-      });
+      // JWT 토큰은 axios 인터셉터에서 자동으로 추가됨
+      // Spring Gateway에서 JWT를 파싱해서 X-User-Id를 다운스트림으로 전달
+      const response = await fetch(notification.data_url!);
       
       if (response.ok) {
         const data = await response.json();
