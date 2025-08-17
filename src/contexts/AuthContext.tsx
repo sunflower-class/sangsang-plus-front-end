@@ -9,17 +9,25 @@ interface User {
   isAdmin?: boolean;
 }
 
+interface PaymentInfo {
+  paymentKey: string;
+  orderId: string | null;
+  amount: string | null;
+}
+
 interface AuthContextType {
   user: User | null;
   token: string | null;
+  paymentInfo: PaymentInfo | null;
   login: (email: string, password: string) => Promise<boolean>;
   signup: (email: string, password: string, name: string) => Promise<boolean>;
   logout: () => Promise<void>;
+  setPaymentInfo: (info: PaymentInfo | null) => void;
   isLoading: boolean;
   refreshUser: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -32,6 +40,7 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -41,6 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // 저장된 토큰과 사용자 정보 불러오기
     const savedToken = localStorage.getItem('jwt_token');
     const savedUser = localStorage.getItem('user');
+    const savedPaymentInfo = localStorage.getItem('paymentInfo');
     
     if (savedToken && savedUser) {
       setToken(savedToken);
@@ -50,8 +60,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // 게이트웨이에서 토큰 검증을 처리하므로 별도 검증 불필요
       // 실제 API 요청 시 게이트웨이가 토큰 유효성을 확인함
     }
+    if (savedPaymentInfo) {
+      setPaymentInfo(JSON.parse(savedPaymentInfo));
+    }
     setIsLoading(false);
   }, []);
+
+  const handleSetPaymentInfo = (info: PaymentInfo | null) => {
+    if (info) {
+      localStorage.setItem('paymentInfo', JSON.stringify(info));
+    } else {
+      localStorage.removeItem('paymentInfo');
+    }
+    setPaymentInfo(info);
+  };
 
   const refreshUser = async () => {
     // JWT 토큰 기반으로는 서버에서 사용자 정보를 가져오는 API가 필요
@@ -107,13 +129,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setUser(null);
       setToken(null);
+      setPaymentInfo(null);
       localStorage.removeItem('user');
       localStorage.removeItem('jwt_token');
+      localStorage.removeItem('paymentInfo');
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, signup, logout, isLoading, refreshUser }}>
+    <AuthContext.Provider value={{ user, token, paymentInfo, login, signup, logout, setPaymentInfo: handleSetPaymentInfo, isLoading, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -17,7 +17,8 @@ import {
   MessageSquare, 
   BarChart3, 
   Home,
-  Sparkles
+  Sparkles,
+  CreditCard
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import logo from '@/assets/images/logo.png';
@@ -34,6 +35,7 @@ const navigationItems: NavigationItem[] = [
   { label: '상세페이지 제작', href: '/generate', icon: Sparkles },
   { label: '리뷰 분석', href: '/review-analysis', icon: BarChart3 },
   { label: 'Q&A', href: '/qna', icon: MessageSquare },
+  { label: '요금제', href: '/payments', icon: CreditCard },
 ];
 
 const ImprovedHeader: React.FC = () => {
