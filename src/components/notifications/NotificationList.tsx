@@ -20,7 +20,7 @@ const NotificationList: React.FC<NotificationListProps> = ({
   onMarkAsRead,
   onDelete,
   isConnected,
-) => {
+}) => {
   const { handleNotificationClick } = useNotifications();
   const getMessageTypeIcon = (type: string) => {
     switch (type) {
