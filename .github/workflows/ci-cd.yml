@@ -13,7 +13,7 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/auth-refactor'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/auth-refactor' || github.ref == 'refs/heads/feature/realtime-notifications'
     
     steps:
     - name: Checkout code
@@ -56,7 +56,7 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/auth-refactor'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/feature/auth-refactor' || github.ref == 'refs/heads/feature/realtime-notifications'
     
     steps:
     - name: Checkout code
