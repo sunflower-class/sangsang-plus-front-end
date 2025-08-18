@@ -3,49 +3,62 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/form/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/layout/card';
 import { Badge } from '@/components/ui/data-display/badge';
-import { Plus, Edit, Trash2, Eye, Calendar, ExternalLink } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Calendar, ExternalLink, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import axios from 'axios';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface PageData {
-  id: string;
-  title: string;
-  createdAt: string;
-  thumbnail: string;
-  status: 'completed' | 'generating' | 'draft';
+  id: number;
+  product_id?: number;
+  user_id: string;
+  original_product_info: string;
+  generated_html?: {
+    html_blocks: string[];
+    image_count: number;
+    generation_completed: boolean;
+  };
+  status: 'processing' | 'completed' | 'failed' | 'draft' | 'published';
+  created_at: string;
+  updated_at: string;
+  product_images?: any[];
 }
 
 const Dashboard = () => {
   const [pages, setPages] = useState<PageData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
-    // 더미 데이터 로드
-    const dummyPages: PageData[] = [
-      {
-        id: '1',
-        title: '프리미엄 무선 헤드폰 상세페이지',
-        createdAt: '2024-01-15',
-        thumbnail: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop',
-        status: 'completed',
-      },
-      {
-        id: '2',
-        title: '스마트워치 Galaxy Watch 상세페이지',
-        createdAt: '2024-01-14',
-        thumbnail: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=300&fit=crop',
-        status: 'completed',
-      },
-      {
-        id: '3',
-        title: '친환경 텀블러 상세페이지',
-        createdAt: '2024-01-13',
-        thumbnail: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop',
-        status: 'draft',
-      },
-    ];
-    setPages(dummyPages);
-  }, []);
+    const fetchProductDetails = async () => {
+      if (!user?.id) return;
+      
+      try {
+        console.log('📋 상품 목록 조회 시작...');
+        setLoading(true);
+        
+        const response = await axios.get<PageData[]>(
+          `${import.meta.env.VITE_API_URL}/api/generation/product-details`
+        );
+        
+        console.log('📋 상품 목록 조회 성공:', response.data);
+        setPages(response.data);
+      } catch (error) {
+        console.error('❌ 상품 목록 조회 실패:', error);
+        toast.error('상품 목록을 불러오는데 실패했습니다.');
+        
+        // 에러 시 빈 배열로 설정
+        setPages([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleDelete = (pageId: string) => {
+    fetchProductDetails();
+  }, [user?.id]);
+
+  const handleDelete = (pageId: number) => {
+    // TODO: 실제 삭제 API 연결 필요
     setPages(prev => prev.filter(page => page.id !== pageId));
     toast.success('페이지가 삭제되었습니다.');
   };
@@ -53,15 +66,42 @@ const Dashboard = () => {
   const getStatusBadge = (status: PageData['status']) => {
     switch (status) {
       case 'completed':
+      case 'published':
         return <Badge className="bg-success text-success-foreground">완료</Badge>;
-      case 'generating':
+      case 'processing':
         return <Badge className="bg-warning text-warning-foreground">생성 중</Badge>;
       case 'draft':
         return <Badge variant="outline">임시저장</Badge>;
+      case 'failed':
+        return <Badge className="bg-destructive text-destructive-foreground">실패</Badge>;
       default:
-        return null;
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
+
+  const getThumbnail = (page: PageData) => {
+    // 상품 이미지가 있으면 사용, 없으면 플레이스홀더
+    if (page.product_images && page.product_images.length > 0) {
+      return page.product_images[0].temp_url || page.product_images[0].s3_url;
+    }
+    return 'https://placehold.co/400x300/png?text=Product+Image';
+  };
+
+  const getTitle = (page: PageData) => {
+    return page.original_product_info || `상세페이지 #${page.id}`;
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">상품 목록 로딩 중...</h2>
+          <p className="text-muted-foreground">잠시만 기다려주세요.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -90,7 +130,7 @@ const Dashboard = () => {
             <CardContent>
               <div className="text-2xl font-bold">{pages.length}</div>
               <p className="text-xs text-muted-foreground">
-                이번 달 {pages.filter(p => p.createdAt.startsWith('2024-01')).length}개 생성
+                이번 달 {pages.filter(p => new Date(p.created_at).getMonth() === new Date().getMonth()).length}개 생성
               </p>
             </CardContent>
           </Card>
@@ -101,22 +141,26 @@ const Dashboard = () => {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{pages.filter(p => p.status === 'completed').length}</div>
+              <div className="text-2xl font-bold">
+                {pages.filter(p => p.status === 'completed' || p.status === 'published').length}
+              </div>
               <p className="text-xs text-muted-foreground">
-                전체의 {Math.round((pages.filter(p => p.status === 'completed').length / pages.length) * 100)}%
+                전체의 {pages.length > 0 ? Math.round((pages.filter(p => p.status === 'completed' || p.status === 'published').length / pages.length) * 100) : 0}%
               </p>
             </CardContent>
           </Card>
           
           <Card className="card-simple">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">임시저장</CardTitle>
+              <CardTitle className="text-sm font-medium">처리 중</CardTitle>
               <Edit className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{pages.filter(p => p.status === 'draft').length}</div>
+              <div className="text-2xl font-bold">
+                {pages.filter(p => p.status === 'processing' || p.status === 'draft').length}
+              </div>
               <p className="text-xs text-muted-foreground">
-                수정이 필요한 페이지
+                생성 중이거나 수정 필요
               </p>
             </CardContent>
           </Card>
@@ -128,8 +172,8 @@ const Dashboard = () => {
             <Card key={page.id} className="card-elevated hover-lift group">
               <div className="relative overflow-hidden rounded-t-lg">
                 <img
-                  src={page.thumbnail}
-                  alt={page.title}
+                  src={getThumbnail(page)}
+                  alt={getTitle(page)}
                   className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
                 />
                 <div className="absolute top-3 right-3">
@@ -138,10 +182,10 @@ const Dashboard = () => {
               </div>
               
               <CardHeader>
-                <CardTitle className="text-lg line-clamp-2">{page.title}</CardTitle>
+                <CardTitle className="text-lg line-clamp-2">{getTitle(page)}</CardTitle>
                 <CardDescription className="flex items-center space-x-2">
                   <Calendar className="h-4 w-4" />
-                  <span>{new Date(page.createdAt).toLocaleDateString('ko-KR')}</span>
+                  <span>{new Date(page.created_at).toLocaleDateString('ko-KR')}</span>
                 </CardDescription>
               </CardHeader>
               
