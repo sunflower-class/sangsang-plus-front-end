@@ -48,8 +48,10 @@ export const useProductDetails = (
         'Content-Type': 'application/json',
       };
 
-      if (userIdParam || userId) {
-        headers['X-User-Id'] = userIdParam || userId!;
+      // JWT 토큰 추가 (토큰에 사용자 정보 포함됨)
+      const token = localStorage.getItem('jwt_token');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
       }
 
       const response = await fetch(url, { headers });
