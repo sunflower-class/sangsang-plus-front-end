@@ -30,7 +30,7 @@ const Editor = () => {
   const [activeTab, setActiveTab] = useState('html');
 
   // pageId가 있으면 해당 상품의 데이터를 가져오기
-  const productDataUrl = pageId ? `${import.meta.env.VITE_API_URL}/generation/product-details/${pageId}` : undefined;
+  const productDataUrl = pageId ? `${import.meta.env.VITE_API_URL}/api/generation/product-details/${pageId}` : undefined;
   const { data: productData, loading: productLoading, error: productError } = useProductDetails(
     productDataUrl, 
     user?.id, 
