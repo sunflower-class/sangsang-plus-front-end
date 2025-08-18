@@ -1,4 +1,5 @@
 import { toast } from 'sonner';
+import axios from 'axios';
 
 export interface Notification {
   event_id: string;
@@ -183,17 +184,12 @@ class NotificationService {
 
   async fetchNotificationData(notification: Notification) {
     try {
-      // JWT 토큰은 axios 인터셉터에서 자동으로 추가됨
-      // Spring Gateway에서 JWT를 파싱해서 X-User-Id를 다운스트림으로 전달
-      const response = await fetch(notification.data_url!);
+      // axios 인터셉터가 자동으로 토큰 추가
+      const response = await axios.get(notification.data_url!);
       
-      if (response.ok) {
-        const data = await response.json();
-        console.log('알림 데이터 조회 성공:', data);
-        this.handleNotificationData(notification, data);
-        return data;
-      }
-      return null;
+      console.log('알림 데이터 조회 성공:', response.data);
+      this.handleNotificationData(notification, response.data);
+      return response.data;
     } catch (error) {
       console.error('알림 데이터 조회 실패:', error);
       return null;
@@ -250,10 +246,11 @@ class NotificationService {
     if (!this.userId) return null;
 
     try {
-      const response = await fetch(
+      // axios 인터셉터가 자동으로 토큰 추가
+      const response = await axios.get<NotificationResponse>(
         `${this.getBaseUrl()}/api/notifications/${this.userId}?limit=${limit}&offset=${offset}`
       );
-      return await response.json();
+      return response.data;
     } catch (error) {
       console.error('알림 목록 조회 실패:', error);
       return null;
@@ -264,11 +261,13 @@ class NotificationService {
     if (!this.userId) return;
 
     try {
-      const response = await fetch(`${this.getBaseUrl()}/api/notifications/${this.userId}/unread-count`);
-      const data: UnreadCountResponse = await response.json();
+      // axios 인터셉터가 자동으로 토큰 추가
+      const response = await axios.get<UnreadCountResponse>(
+        `${this.getBaseUrl()}/api/notifications/${this.userId}/unread-count`
+      );
       
-      if (data.success) {
-        this.onUnreadCountChanged?.(data.data.unread_count);
+      if (response.data.success) {
+        this.onUnreadCountChanged?.(response.data.data.unread_count);
       }
     } catch (error) {
       console.error('알림 개수 업데이트 실패:', error);
@@ -279,12 +278,12 @@ class NotificationService {
     if (!this.userId) return false;
 
     try {
-      const response = await fetch(
-        `${this.getBaseUrl()}/api/notifications/${notificationId}/read?user_id=${this.userId}`,
-        { method: 'PUT' }
+      // axios 인터셉터가 자동으로 토큰 추가
+      const response = await axios.put(
+        `${this.getBaseUrl()}/api/notifications/${notificationId}/read?user_id=${this.userId}`
       );
       
-      if (response.ok) {
+      if (response.status === 200) {
         this.updateNotificationCount();
         return true;
       }
@@ -299,12 +298,12 @@ class NotificationService {
     if (!this.userId) return false;
 
     try {
-      const response = await fetch(
-        `${this.getBaseUrl()}/api/notifications/${notificationId}?user_id=${this.userId}`,
-        { method: 'DELETE' }
+      // axios 인터셉터가 자동으로 토큰 추가
+      const response = await axios.delete(
+        `${this.getBaseUrl()}/api/notifications/${notificationId}?user_id=${this.userId}`
       );
       
-      if (response.ok) {
+      if (response.status === 200) {
         this.updateNotificationCount();
         return true;
       }
