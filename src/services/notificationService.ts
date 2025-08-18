@@ -78,7 +78,10 @@ class NotificationService {
     // 기존 연결이 있으면 정리
     this.disconnect();
 
-    const url = `${this.getBaseUrl()}/api/notifications/stream/${this.userId}`;
+    // JWT 토큰을 URL 파라미터로 추가
+    const token = localStorage.getItem('jwt_token');
+    const baseUrl = `${this.getBaseUrl()}/api/notifications/stream/${this.userId}`;
+    const url = token ? `${baseUrl}?token=${encodeURIComponent(token)}` : baseUrl;
     
     try {
       this.eventSource = new EventSource(url);
