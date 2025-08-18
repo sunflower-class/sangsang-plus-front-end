@@ -15,6 +15,8 @@ spec:
       labels:
         app: sangsang-plus-frontend
     spec:
+      nodeSelector:
+        agentpool: agentpool
       containers:
       - name: sangsang-plus-frontend
         image: lmo2914/frontend:latest  # Docker Hub 이미지
