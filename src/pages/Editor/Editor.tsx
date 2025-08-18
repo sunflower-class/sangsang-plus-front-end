@@ -38,16 +38,45 @@ const Editor = () => {
   );
 
   useEffect(() => {
+    console.log('🔄 Editor useEffect 실행:', {
+      pageId,
+      hasLocationState: !!location.state?.generatedHtml,
+      hasProductData: !!productData,
+      htmlBlocksLength: productData?.generated_html?.html_blocks?.length || 0,
+      htmlListLength: productData?.html_list?.length || 0,
+      productDataStatus: productData?.status
+    });
+
     // state로 전달된 HTML이 있으면 우선 사용 (기존 로직 유지)
     if (location.state?.generatedHtml) {
+      console.log('📄 location.state에서 HTML 로드');
       setHtmlContent(location.state.generatedHtml);
     }
     // pageId로 가져온 데이터가 있으면 HTML 설정
+    else if (productData?.generated_html?.html_blocks && productData.generated_html.html_blocks.length > 0) {
+      console.log('📄 productData에서 HTML 처리 시작. html_blocks:', productData.generated_html.html_blocks);
+      const processedHtml = productData.generated_html.html_blocks.map((htmlBlock: string, index: number) => {
+        return `<section id="block-${index}">${htmlBlock}</section>`;
+      }).join('\n');
+      console.log('✅ 처리된 HTML:', processedHtml.substring(0, 200) + '...');
+      setHtmlContent(processedHtml);
+    }
+    // 기존 html_list 필드도 확인 (호환성 유지)
     else if (productData?.html_list && productData.html_list.length > 0) {
+      console.log('📄 productData에서 HTML 처리 시작. html_list:', productData.html_list);
       const processedHtml = productData.html_list.map((htmlBlock: string, index: number) => {
         return `<section id="block-${index}">${htmlBlock}</section>`;
       }).join('\n');
+      console.log('✅ 처리된 HTML:', processedHtml.substring(0, 200) + '...');
       setHtmlContent(processedHtml);
+    } else if (productData) {
+      console.log('⚠️ productData는 있지만 HTML 데이터가 없음:', {
+        hasGeneratedHtml: !!productData.generated_html,
+        hasHtmlBlocks: !!productData.generated_html?.html_blocks,
+        htmlBlocksLength: productData.generated_html?.html_blocks?.length || 0,
+        hasHtmlList: !!productData.html_list,
+        productData
+      });
     }
   }, [pageId, location.state, productData]);
 

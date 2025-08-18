@@ -3,8 +3,24 @@ import { toast } from 'sonner';
 
 export interface ProductDetailsData {
   id: string;
-  title: string;
-  description: string;
+  product_id?: number;
+  user_id?: string;
+  user_session?: string | null;
+  original_product_info?: string;
+  generated_html?: {
+    html_blocks: string[];
+    image_count: number;
+    generation_completed: boolean;
+  };
+  used_templates?: any[];
+  used_categories?: any[];
+  status: 'processing' | 'completed' | 'failed';
+  created_at: string;
+  updated_at: string;
+  product_images?: any[];
+  // 기존 필드들 (호환성 유지)
+  title?: string;
+  description?: string;
   images?: string[];
   specifications?: Record<string, any>;
   features?: string[];
@@ -16,10 +32,7 @@ export interface ProductDetailsData {
     currency: string;
   };
   availability?: string;
-  created_at: string;
-  updated_at: string;
-  status: 'processing' | 'completed' | 'failed';
-  html_list?: string[]; // 생성된 HTML 블록 리스트
+  html_list?: string[]; // 기존 필드명 (호환성 유지)
 }
 
 export interface UseProductDetailsOptions {
@@ -61,16 +74,23 @@ export const useProductDetails = (
       }
 
       const result = await response.json();
+      console.log('🔍 Product Details API 응답:', JSON.stringify(result, null, 2));
       
       let productData: ProductDetailsData;
       
       if (result.success && result.data) {
+        console.log('✅ result.success && result.data 경로');
         productData = result.data;
       } else if (result.id) {
+        console.log('✅ result.id 경로');
         productData = result;
       } else {
+        console.error('❌ Invalid response format. result:', result);
         throw new Error('Invalid response format');
       }
+
+      console.log('📦 최종 productData:', productData);
+      console.log('📝 HTML List:', productData.html_list);
 
       setData(productData);
       options.onSuccess?.(productData);
