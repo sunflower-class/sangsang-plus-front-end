@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { Textarea } from '@/components/ui/form/textarea';
 import { useProductDetails } from '@/hooks/useProductDetails';
 import { useAuth } from '@/contexts/AuthContext';
+import axios from 'axios';
 
 const Editor = () => {
   const { pageId } = useParams();
@@ -28,6 +29,7 @@ const Editor = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState('html');
+  const [isSaving, setIsSaving] = useState(false);
 
   // pageId가 있으면 해당 상품의 데이터를 가져오기
   const productDataUrl = pageId ? `${import.meta.env.VITE_API_URL}/api/generation/product-details/${pageId}` : undefined;
@@ -93,8 +95,54 @@ const Editor = () => {
     return processed;
   }, [rawBlockHtml]);
 
-  const handleSave = () => {
-    toast.success('변경사항이 저장되었습니다.');
+  const handleSave = async () => {
+    if (!pageId) {
+      toast.error('상세페이지 ID가 없습니다.');
+      return;
+    }
+
+    if (!htmlContent) {
+      toast.error('저장할 HTML 콘텐츠가 없습니다.');
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      // HTML을 블록별로 분리 (section 태그 기준)
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlContent, 'text/html');
+      const sections = doc.querySelectorAll('section');
+      const htmlBlocks = Array.from(sections).map(section => section.innerHTML);
+
+      const updateData = {
+        generated_html: {
+          html_blocks: htmlBlocks,
+          image_count: blockImages.length,
+          generation_completed: true
+        },
+        status: 'published' // 저장 시 published 상태로 변경
+      };
+
+      console.log('💾 상세페이지 업데이트 요청:', updateData);
+
+      const response = await axios.put(
+        `${import.meta.env.VITE_API_URL}/api/generation/product-details/${pageId}`,
+        updateData
+      );
+
+      if (response.status === 200) {
+        toast.success('변경사항이 저장되었습니다.');
+      }
+    } catch (error) {
+      console.error('저장 실패:', error);
+      const errorMessage = axios.isAxiosError(error) 
+        ? error.response?.data?.message || error.message
+        : '저장 중 오류가 발생했습니다.';
+      toast.error(errorMessage);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleApplyChanges = (mode: 'raw') => {
@@ -174,11 +222,18 @@ const Editor = () => {
           <div>
             <h1 className="text-2xl font-bold text-foreground">상세페이지 에디터</h1>
             <p className="text-muted-foreground">
-              {pageId ? `상품 ID: ${pageId} - ` : ''}수정하고 싶은 블록을 클릭하세요.
+              {pageId ? `상세페이지 ID: ${pageId} - ` : ''}수정하고 싶은 블록을 클릭하세요.
             </p>
           </div>
           <div className="flex items-center space-x-4">
-            <Button onClick={handleSave}><Save className="mr-2 h-4 w-4" />저장</Button>
+            <Button onClick={handleSave} disabled={isSaving}>
+              {isSaving ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              {isSaving ? '저장 중...' : '저장'}
+            </Button>
           </div>
         </div>
       </div>
