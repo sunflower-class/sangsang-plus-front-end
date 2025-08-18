@@ -37,12 +37,37 @@ const Dashboard = () => {
         console.log('📋 상품 목록 조회 시작...');
         setLoading(true);
         
-        const response = await axios.get<PageData[]>(
+        const response = await axios.get(
           `${import.meta.env.VITE_API_URL}/api/generation/product-details`
         );
         
-        console.log('📋 상품 목록 조회 성공:', response.data);
-        setPages(response.data);
+        console.log('📋 상품 목록 조회 API 응답:', response.data);
+        console.log('📋 응답 데이터 타입:', typeof response.data);
+        console.log('📋 응답이 배열인가?', Array.isArray(response.data));
+        
+        // API 응답 구조에 따른 데이터 추출
+        let pageData: PageData[] = [];
+        
+        if (Array.isArray(response.data)) {
+          // 직접 배열인 경우
+          pageData = response.data;
+        } else if (response.data && typeof response.data === 'object') {
+          // 객체 형태인 경우 (예: {data: [...], success: true})
+          if (response.data.data && Array.isArray(response.data.data)) {
+            pageData = response.data.data;
+          } else if (response.data.items && Array.isArray(response.data.items)) {
+            pageData = response.data.items;
+          } else {
+            console.warn('⚠️ 예상하지 못한 API 응답 구조:', response.data);
+            pageData = [];
+          }
+        } else {
+          console.warn('⚠️ API 응답이 배열이나 객체가 아님:', response.data);
+          pageData = [];
+        }
+        
+        console.log('📋 최종 페이지 데이터:', pageData);
+        setPages(pageData);
       } catch (error) {
         console.error('❌ 상품 목록 조회 실패:', error);
         toast.error('상품 목록을 불러오는데 실패했습니다.');
