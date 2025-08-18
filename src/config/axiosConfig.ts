@@ -51,11 +51,11 @@ export const setupAxiosInterceptors = () => {
         try {
           // 토큰 갱신 시도
           console.log('토큰 만료 감지, 리프레시 시도 중...');
-          const newToken = await authService.refreshToken();
+          const newAccessToken = await authService.refreshToken();
           console.log('토큰 리프레시 성공');
           
           // JWT에서 사용자 정보 추출하여 AuthContext 업데이트
-          const updatedUser = extractUserFromToken(newToken);
+          const updatedUser = extractUserFromToken(newAccessToken);
           if (updatedUser && authContextUpdateUser) {
             authContextUpdateUser(updatedUser);
             localStorage.setItem('user', JSON.stringify(updatedUser));
@@ -65,7 +65,7 @@ export const setupAxiosInterceptors = () => {
           }
           
           // 원래 요청에 새 토큰 적용하여 재시도
-          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
           return axios(originalRequest);
         } catch (refreshError) {
           // 토큰 갱신 실패 시 로그아웃 처리

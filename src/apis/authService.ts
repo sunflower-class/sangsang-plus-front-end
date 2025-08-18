@@ -161,24 +161,40 @@ export const refreshToken = async (): Promise<string> => {
       throw new Error('리프레시 토큰이 없습니다');
     }
 
-    const response = await axios.post<{ token: string; refreshToken?: string }>(`${AUTH_URL}/refresh`, {
-      refreshToken: refreshTokenValue
+    const response = await axios.post<{
+      success: boolean;
+      message: string;
+      accessToken: string;
+      refreshToken: string;
+      expiresIn: number;
+    }>(`${AUTH_URL}/refresh`, {
+      refresh_token: refreshTokenValue
     });
     
-    const newToken = response.data.token;
-    
-    // 새 토큰을 저장
-    localStorage.setItem('jwt_token', newToken);
-    axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
-    
-    // 새 리프레시 토큰이 있으면 업데이트
-    if (response.data.refreshToken) {
-      localStorage.setItem('refresh_token', response.data.refreshToken);
+    if (!response.data.success) {
+      throw new Error(response.data.message || '토큰 갱신 실패');
     }
     
-    return newToken;
+    const { accessToken, refreshToken: newRefreshToken } = response.data;
+    
+    // 새 토큰을 저장
+    localStorage.setItem('jwt_token', accessToken);
+    localStorage.setItem('refresh_token', newRefreshToken);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+    
+    return accessToken;
   } catch (error) {
     console.error("토큰 갱신 실패:", error);
+    
+    // 에러 타입별 처리
+    if (error.response?.status === 401) {
+      console.warn('INVALID_REFRESH_TOKEN: 리프레시 토큰이 만료되거나 유효하지 않음');
+    } else if (error.response?.status === 400) {
+      console.warn('MALFORMED_REFRESH_TOKEN: 토큰 형식이 잘못됨');
+    } else if (error.response?.status === 503) {
+      console.warn('SERVICE_UNAVAILABLE: Keycloak 연결 실패');
+    }
+    
     // 리프레시 토큰도 만료된 경우 로그아웃 처리
     localStorage.removeItem('jwt_token');
     localStorage.removeItem('refresh_token');

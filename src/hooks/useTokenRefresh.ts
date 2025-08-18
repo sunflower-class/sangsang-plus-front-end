@@ -49,19 +49,32 @@ export const useTokenRefresh = () => {
 
     try {
       console.log('프로액티브 토큰 갱신 시작');
-      const newToken = await authService.refreshToken();
+      const newAccessToken = await authService.refreshToken();
       
       // 다음 갱신 스케줄링
-      scheduleTokenRefresh(newToken);
+      scheduleTokenRefresh(newAccessToken);
       
       console.log('프로액티브 토큰 갱신 완료');
     } catch (error) {
       console.error('프로액티브 토큰 갱신 실패:', error);
       
-      // 갱신 실패 시 재시도 (1분 후)
-      refreshTimeoutRef.current = setTimeout(() => {
-        performTokenRefresh();
-      }, 60 * 1000);
+      // 에러 타입별 처리
+      if (error.response?.status === 401) {
+        // 리프레시 토큰이 만료된 경우 - 로그인 페이지로 이동
+        console.warn('리프레시 토큰 만료, 로그인 페이지로 이동');
+        window.location.href = '/login';
+      } else if (error.response?.status === 503) {
+        // 서비스 이용 불가 - 30초 후 재시도
+        console.warn('Keycloak 연결 실패, 30초 후 재시도');
+        refreshTimeoutRef.current = setTimeout(() => {
+          performTokenRefresh();
+        }, 30 * 1000);
+      } else {
+        // 기타 에러 - 1분 후 재시도
+        refreshTimeoutRef.current = setTimeout(() => {
+          performTokenRefresh();
+        }, 60 * 1000);
+      }
     }
   };
 
