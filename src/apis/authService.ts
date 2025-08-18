@@ -164,22 +164,37 @@ export const refreshToken = async (): Promise<string> => {
     const response = await axios.post<{
       success: boolean;
       message: string;
-      accessToken: string;
+      token: string;
       refreshToken: string;
+      user: any;
       expiresIn: number;
     }>(`${AUTH_URL}/refresh`, {
       refresh_token: refreshTokenValue
     });
     
+    console.log('🔄 Refresh API 응답:', response.data);
+    
     if (!response.data.success) {
       throw new Error(response.data.message || '토큰 갱신 실패');
     }
     
-    const { accessToken, refreshToken: newRefreshToken } = response.data;
+    const { token: accessToken, refreshToken: newRefreshToken } = response.data;
+    console.log('📝 추출된 토큰들:', { accessToken: !!accessToken, newRefreshToken: !!newRefreshToken });
     
     // 새 토큰을 저장
+    console.log('💾 localStorage에 토큰 저장 중...');
     localStorage.setItem('jwt_token', accessToken);
     localStorage.setItem('refresh_token', newRefreshToken);
+    
+    // 저장 확인
+    const savedJwtToken = localStorage.getItem('jwt_token');
+    const savedRefreshToken = localStorage.getItem('refresh_token');
+    console.log('✅ localStorage 저장 확인:', {
+      jwt_saved: !!savedJwtToken,
+      refresh_saved: !!savedRefreshToken,
+      jwt_length: savedJwtToken?.length || 0
+    });
+    
     axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
     
     return accessToken;
