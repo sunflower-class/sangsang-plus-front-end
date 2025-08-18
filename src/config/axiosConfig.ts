@@ -64,6 +64,11 @@ export const setupAxiosInterceptors = () => {
             console.warn('토큰에서 사용자 정보 추출 실패, 기존 사용자 정보 유지');
           }
           
+          // SSE 재연결을 위한 이벤트 발생
+          window.dispatchEvent(new CustomEvent('tokenRefreshed', { 
+            detail: { token: newAccessToken, user: updatedUser } 
+          }));
+          
           // 원래 요청에 새 토큰 적용하여 재시도
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
           return axios(originalRequest);

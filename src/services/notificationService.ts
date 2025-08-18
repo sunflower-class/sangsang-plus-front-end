@@ -78,10 +78,16 @@ class NotificationService {
     // 기존 연결이 있으면 정리
     this.disconnect();
 
-    // JWT 토큰을 URL 파라미터로 추가
+    // JWT 토큰을 URL 파라미터로 추가 (매번 최신 토큰 가져오기)
     const token = localStorage.getItem('jwt_token');
+    if (!token) {
+      console.warn('⚠️ JWT 토큰이 없습니다. SSE 연결을 중단합니다.');
+      return;
+    }
+    
     const baseUrl = `${this.getBaseUrl()}/api/notifications/stream/${this.userId}`;
-    const url = token ? `${baseUrl}?token=${encodeURIComponent(token)}` : baseUrl;
+    const url = `${baseUrl}?token=${encodeURIComponent(token)}`;
+    console.log('🔌 SSE 연결 시도 - User ID:', this.userId, 'Token exists:', !!token);
     
     try {
       this.eventSource = new EventSource(url);

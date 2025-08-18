@@ -8,14 +8,18 @@ import {
   Save, 
   Eye, 
   Image as ImageIcon, 
-  PenSquare
+  PenSquare,
+  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Textarea } from '@/components/ui/form/textarea';
+import { useProductDetails } from '@/hooks/useProductDetails';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Editor = () => {
   const { pageId } = useParams();
   const location = useLocation();
+  const { user } = useAuth();
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
   const [htmlContent, setHtmlContent] = useState('');
   const [rawBlockHtml, setRawBlockHtml] = useState('');
@@ -25,11 +29,27 @@ const Editor = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState('html');
 
+  // pageId가 있으면 해당 상품의 데이터를 가져오기
+  const productDataUrl = pageId ? `${import.meta.env.VITE_API_URL}/generation/product-details/${pageId}` : undefined;
+  const { data: productData, loading: productLoading, error: productError } = useProductDetails(
+    productDataUrl, 
+    user?.id, 
+    { autoFetch: !!pageId }
+  );
+
   useEffect(() => {
+    // state로 전달된 HTML이 있으면 우선 사용 (기존 로직 유지)
     if (location.state?.generatedHtml) {
       setHtmlContent(location.state.generatedHtml);
     }
-  }, [pageId, location.state]);
+    // pageId로 가져온 데이터가 있으면 HTML 설정
+    else if (productData?.html_list && productData.html_list.length > 0) {
+      const processedHtml = productData.html_list.map((htmlBlock: string, index: number) => {
+        return `<section id="block-${index}">${htmlBlock}</section>`;
+      }).join('\n');
+      setHtmlContent(processedHtml);
+    }
+  }, [pageId, location.state, productData]);
 
   const processedRawHtml = useMemo(() => {
     const newMap: Record<string, string> = {};
@@ -90,6 +110,31 @@ const Editor = () => {
 
   const triggerFileSelect = () => fileInputRef.current?.click();
 
+  // 로딩 중이거나 에러가 있는 경우 처리
+  if (productLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">상품 데이터 로딩 중...</h2>
+          <p className="text-muted-foreground">잠시만 기다려주세요.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (productError && pageId) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">데이터를 불러올 수 없습니다</h2>
+          <p className="text-muted-foreground mb-4">{productError.message}</p>
+          <Button onClick={() => window.location.reload()}>다시 시도</Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <input type="file" ref={fileInputRef} onChange={handleImageChange} className="hidden" accept="image/*" />
@@ -99,7 +144,9 @@ const Editor = () => {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">상세페이지 에디터</h1>
-            <p className="text-muted-foreground">수정하고 싶은 블록을 클릭하세요.</p>
+            <p className="text-muted-foreground">
+              {pageId ? `상품 ID: ${pageId} - ` : ''}수정하고 싶은 블록을 클릭하세요.
+            </p>
           </div>
           <div className="flex items-center space-x-4">
             <Button onClick={handleSave}><Save className="mr-2 h-4 w-4" />저장</Button>
