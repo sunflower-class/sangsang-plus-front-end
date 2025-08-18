@@ -146,9 +146,13 @@ class GenerateService {
         
         options.onProgress?.(progress, status.message || '처리 중...');
         
-        if (status.success && status.data?.status === 'completed' && status.data.html_list) {
+        if (status.success && status.data?.status === 'completed') {
           options.onProgress?.(100, '완료!');
-          options.onComplete?.(status.data.html_list);
+          
+          // HTML 데이터가 있으면 콜백 호출
+          if (status.data.html_list) {
+            options.onComplete?.(status.data.html_list);
+          }
           
           toast.success('상세페이지 생성이 완료되었습니다!');
           
@@ -210,12 +214,17 @@ class GenerateService {
       try {
         const status = await this.checkTaskStatus(taskId);
         
-        if (status.success && status.data?.status === 'completed' && status.data.html_list) {
+        if (status.success && status.data?.status === 'completed') {
           clearInterval(interval);
           this.pollingIntervals.delete(taskId);
           
-          options.onComplete?.(status.data.html_list);
-          console.log('백그라운드 폴링으로 완료 감지:', status.data.html_list);
+          // HTML 데이터가 있으면 콜백 호출, 없으면(404로 완료된 경우) 로그만
+          if (status.data.html_list) {
+            options.onComplete?.(status.data.html_list);
+            console.log('백그라운드 폴링으로 완료 감지:', status.data.html_list);
+          } else {
+            console.log('작업 완료됨 (404로 인한 완료 감지):', taskId);
+          }
         }
         
         if (status.success && status.data?.status === 'failed') {
@@ -251,6 +260,19 @@ class GenerateService {
       const response = await axios.get<GenerateResponse>(`${API_URL}/status/${taskId}`);
       return response.data;
     } catch (error) {
+      // 404 에러는 작업이 완료되어 상태 정보가 삭제된 것으로 간주
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        console.log('작업 완료로 인한 404 - 상태 확인 중단:', taskId);
+        return {
+          success: true,
+          message: '작업 완료됨 (404)',
+          data: {
+            status: 'completed',
+            task_id: taskId
+          }
+        };
+      }
+      
       console.error('작업 상태 확인 실패:', error);
       throw error;
     }
