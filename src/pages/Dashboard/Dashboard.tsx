@@ -82,10 +82,35 @@ const Dashboard = () => {
     fetchProductDetails();
   }, [user?.id]);
 
-  const handleDelete = (pageId: number) => {
-    // TODO: 실제 삭제 API 연결 필요
-    setPages(prev => prev.filter(page => page.id !== pageId));
-    toast.success('페이지가 삭제되었습니다.');
+  const handleDelete = async (pageId: number) => {
+    try {
+      // 사용자 확인
+      const confirmDelete = confirm('정말로 이 상세페이지를 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.');
+      if (!confirmDelete) {
+        return;
+      }
+
+      console.log('🗑️ 상세페이지 삭제 시작:', pageId);
+
+      const response = await axios.delete(
+        `${import.meta.env.VITE_API_URL}/api/generation/product-details/${pageId}`
+      );
+
+      if (response.status === 200 || response.status === 204) {
+        // 성공 시 로컬 상태에서도 제거
+        setPages(prev => prev.filter(page => page.id !== pageId));
+        toast.success('상세페이지가 삭제되었습니다.');
+        console.log('✅ 상세페이지 삭제 완료:', pageId);
+      }
+    } catch (error) {
+      console.error('❌ 상세페이지 삭제 실패:', error);
+      
+      const errorMessage = axios.isAxiosError(error) 
+        ? error.response?.data?.message || error.message
+        : '삭제 중 오류가 발생했습니다.';
+      
+      toast.error(`삭제 실패: ${errorMessage}`);
+    }
   };
 
   const getStatusBadge = (status: PageData['status']) => {
