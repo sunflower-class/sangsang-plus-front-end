@@ -71,9 +71,9 @@ class GenerateService {
         
         // task_id가 다른 위치에 있을 수 있으므로 여러 경로 확인
         const taskId = response.data.data?.task_id || 
-                       response.data.task_id || 
-                       response.data.taskId || 
-                       response.data.data?.taskId;
+                       (response.data as any).task_id || 
+                       (response.data as any).taskId || 
+                       (response.data.data as any)?.taskId;
         
         console.log('추출된 Task ID:', taskId);
         
