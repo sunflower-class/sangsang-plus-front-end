@@ -115,7 +115,12 @@ class NotificationService {
       };
 
       this.eventSource.onerror = (error) => {
-        console.warn('⚠️ SSE 연결 오류 발생, 재연결 준비 중...', error);
+        console.warn('⚠️ SSE 연결 오류 발생:', {
+          readyState: this.eventSource?.readyState,
+          error: error,
+          type: error.type
+        });
+        
         this.onConnectionStateChanged?.(false);
         
         // 토큰이 없거나 유효하지 않은 경우 재연결 시도하지 않음
@@ -126,10 +131,29 @@ class NotificationService {
           return;
         }
         
-        // EventSource의 readyState 확인
+        // HTTP/2 프로토콜 에러나 특정 에러인 경우 재연결 지연 시간 증가
+        const isProtocolError = error.type === 'error';
+        if (isProtocolError) {
+          console.warn('🔄 프로토콜 에러 감지, 재연결 대기 시간 증가');
+          this.reconnectAttempts = Math.min(this.reconnectAttempts + 2, 5); // 더 긴 대기
+        }
+        
+        // EventSource 상태별 처리
         if (this.eventSource?.readyState === EventSource.CLOSED) {
-          console.log('SSE 연결이 닫혔습니다. 재연결을 시도합니다.');
+          console.log('📡 SSE 연결이 닫혔습니다. 재연결을 시도합니다.');
+          // 기존 연결 완전히 정리 후 재연결
+          this.eventSource = null;
           this.handleReconnect();
+        } else if (this.eventSource?.readyState === EventSource.CONNECTING) {
+          console.log('🔄 SSE 연결 시도 중...');
+          // 연결 중인 상태에서는 잠시 대기
+          setTimeout(() => {
+            if (this.eventSource?.readyState === EventSource.CONNECTING) {
+              console.warn('연결 타임아웃, 재연결 시도');
+              this.disconnect();
+              this.handleReconnect();
+            }
+          }, 10000); // 10초 타임아웃
         }
       };
     } catch (error) {
@@ -226,6 +250,8 @@ class NotificationService {
   }
 
   disconnect() {
+    console.log('🔌 SSE 연결 해제 중...');
+    
     // 재연결 타이머 정리
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
@@ -233,10 +259,21 @@ class NotificationService {
     }
 
     if (this.eventSource) {
-      this.eventSource.close();
+      // 이벤트 리스너 제거
+      this.eventSource.onopen = null;
+      this.eventSource.onmessage = null;
+      this.eventSource.onerror = null;
+      
+      // 연결 상태 확인 후 닫기
+      if (this.eventSource.readyState !== EventSource.CLOSED) {
+        this.eventSource.close();
+      }
+      
       this.eventSource = null;
-      this.onConnectionStateChanged?.(false);
+      console.log('✅ SSE 연결 완전히 해제됨');
     }
+    
+    this.onConnectionStateChanged?.(false);
     
     // 재연결 시도 카운터 리셋
     this.reconnectAttempts = 0;
