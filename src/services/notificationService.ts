@@ -117,6 +117,14 @@ class NotificationService {
         console.warn('⚠️ SSE 연결 오류 발생, 재연결 준비 중...', error);
         this.onConnectionStateChanged?.(false);
         
+        // 토큰이 없거나 유효하지 않은 경우 재연결 시도하지 않음
+        const currentToken = localStorage.getItem('jwt_token');
+        if (!currentToken || currentToken === 'undefined') {
+          console.error('❌ 유효한 토큰이 없어 SSE 재연결을 중단합니다');
+          this.disconnect();
+          return;
+        }
+        
         // EventSource의 readyState 확인
         if (this.eventSource?.readyState === EventSource.CLOSED) {
           console.log('SSE 연결이 닫혔습니다. 재연결을 시도합니다.');
