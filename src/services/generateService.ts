@@ -48,6 +48,13 @@ class GenerateService {
       // Spring Gateway에서 JWT를 파싱해서 X-User-Id를 다운스트림으로 전달
       const response = await axios.post<GenerateResponse>(API_URL, request);
       
+      // 응답 전체 구조 로깅
+      console.log('=== 생성 API 응답 전체 구조 ===');
+      console.log('Status:', response.status);
+      console.log('Response Data:', JSON.stringify(response.data, null, 2));
+      console.log('Response Data Type:', typeof response.data);
+      console.log('Response Data Keys:', response.data ? Object.keys(response.data) : 'null');
+      
       // 200 OK - 즉시 완료된 경우 (기존 동기 방식)
       if (response.status === 200 && response.data.success && response.data.data?.html_list) {
         console.log('즉시 완료된 HTML 생성:', response.data.data.html_list);
@@ -57,9 +64,21 @@ class GenerateService {
       
       // 202 Accepted - 비동기 처리 중
       if (response.status === 202) {
-        const taskId = response.data.data?.task_id;
+        console.log('202 응답 - 비동기 처리 감지');
+        console.log('response.data:', response.data);
+        console.log('response.data.data:', response.data.data);
+        console.log('response.data.data?.task_id:', response.data.data?.task_id);
+        
+        // task_id가 다른 위치에 있을 수 있으므로 여러 경로 확인
+        const taskId = response.data.data?.task_id || 
+                       response.data.task_id || 
+                       response.data.taskId || 
+                       response.data.data?.taskId;
+        
+        console.log('추출된 Task ID:', taskId);
         
         if (!taskId) {
+          console.error('Task ID를 찾을 수 없음. 응답 구조:', response.data);
           throw new Error('Task ID를 받지 못했습니다.');
         }
 
