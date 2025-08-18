@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/form/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/layout/card';
@@ -22,6 +22,19 @@ import {
 
 const Index = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+
+  // 로그인한 사용자는 대시보드로 리다이렉트
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
+
+  // 로그인하지 않은 사용자에게만 랜딩 페이지 표시
+  if (user) {
+    return null; // 리다이렉트 중이므로 아무것도 렌더링하지 않음
+  }
 
   return (
     <section className="h-full relative overflow-hidden bg-gradient-primary text-white flex items-center">
