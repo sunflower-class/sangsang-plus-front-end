@@ -131,8 +131,8 @@ const Dashboard = () => {
 
   const getThumbnail = (page: PageData) => {
     // 상품 이미지가 있으면 사용, 없으면 플레이스홀더
-    if (page.product_images && page.product_images.length > 0) {
-      return page.product_images[0].temp_url || page.product_images[0].s3_url;
+    if (page.product_images && page.product_images.length > 1) {
+      return page.product_images[1].s3_url || page.product_images[1].temp_url;
     }
     return 'https://placehold.co/400x300/png?text=Product+Image';
   };
