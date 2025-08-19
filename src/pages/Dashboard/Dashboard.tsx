@@ -19,6 +19,7 @@ interface PageData {
     generation_completed: boolean;
   };
   status: 'processing' | 'completed' | 'failed' | 'draft' | 'published';
+  thumbnail?: string;
   created_at: string;
   updated_at: string;
   product_images?: any[];
@@ -52,11 +53,11 @@ const Dashboard = () => {
           // 직접 배열인 경우
           pageData = response.data;
         } else if (response.data && typeof response.data === 'object') {
-          // 객체 형태인 경우 (예: {data: [...], success: true})
-          if (response.data.data && Array.isArray(response.data.data)) {
-            pageData = response.data.data;
-          } else if (response.data.items && Array.isArray(response.data.items)) {
+          // 새로운 API 응답 구조 (items 배열 포함)
+          if (response.data.items && Array.isArray(response.data.items)) {
             pageData = response.data.items;
+          } else if (response.data.data && Array.isArray(response.data.data)) {
+            pageData = response.data.data;
           } else {
             console.warn('⚠️ 예상하지 못한 API 응답 구조:', response.data);
             pageData = [];
@@ -131,10 +132,16 @@ const Dashboard = () => {
   };
 
   const getThumbnail = (page: PageData) => {
-    // 상품 이미지가 있으면 사용, 없으면 플레이스홀더
+    // thumbnail 필드가 있으면 우선 사용
+    if (page.thumbnail) {
+      return page.thumbnail;
+    }
+    
+    // 기존 product_images 로직 유지 (fallback)
     if (page.product_images && page.product_images.length > 1) {
       return page.product_images[1].s3_url || page.product_images[1].temp_url;
     }
+    
     return 'https://placehold.co/400x300/png?text=Product+Image';
   };
 
