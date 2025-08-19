@@ -116,8 +116,9 @@ const Dashboard = () => {
   const getStatusBadge = (status: PageData['status']) => {
     switch (status) {
       case 'completed':
+        return <Badge className="bg-success text-success-foreground">작업 완료</Badge>;
       case 'published':
-        return <Badge className="bg-success text-success-foreground">완료</Badge>;
+        return <Badge className="bg-success text-success-foreground">작업 등록 완료</Badge>;
       case 'processing':
         return <Badge className="bg-warning text-warning-foreground">생성 중</Badge>;
       case 'draft':
