@@ -87,48 +87,80 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   const handleNotificationWithData = async (notification: Notification) => {
     console.log('🔔 알림 데이터 처리 시작:', notification);
     
-    if (notification.service_type === 'product-details' && notification.data_url) {
-      // data_url에서 상세페이지 ID 추출 (예: /api/generation/product-details/20 -> 20)
-      const urlMatch = notification.data_url.match(/\/product-details\/(\d+)/);
-      const productId = urlMatch ? urlMatch[1] : null;
+    // HTML 생성 작업 완료 알림 처리
+    if (notification.service_type === 'html-generation' || 
+        notification.service_type === 'product-details' ||
+        notification.title?.includes('HTML 생성') ||
+        notification.title?.includes('상세페이지')) {
       
-      console.log('📍 추출된 상품 ID:', productId);
-      
-      if (productId) {
-        setTimeout(() => {
-          const shouldNavigate = confirm(
-            `${notification.title}\n상품 상세페이지가 생성되었습니다. 에디터에서 확인하시겠습니까?`
-          );
-          console.log('👤 사용자 응답:', shouldNavigate);
-          
-          if (shouldNavigate) {
-            console.log('🚀 에디터로 이동 중... Product ID:', productId);
-            // 상품 ID로 에디터 페이지 이동
-            navigate(`/editor/${productId}`);
-          }
-        }, 1000);
-      } else {
-        console.log('❌ data_url에서 상품 ID를 추출할 수 없음:', notification.data_url);
+      // 작업 상태별 처리
+      if (notification.message_type === 'success') {
+        // data_url에서 상세페이지 ID 추출 (예: /api/generation/product-details/20 -> 20)
+        const urlMatch = notification.data_url?.match(/\/product-details\/(\d+)/);
+        const productId = urlMatch ? urlMatch[1] : null;
         
-        if (notification.action_url) {
+        // data_id가 직접 제공된 경우
+        const finalProductId = productId || notification.data_id;
+        
+        console.log('📍 추출된 상품 ID:', finalProductId);
+        
+        if (finalProductId) {
+          setTimeout(() => {
+            const shouldNavigate = confirm(
+              `🎉 ${notification.title}\n\n${notification.message}\n\n에디터에서 확인하시겠습니까?`
+            );
+            console.log('👤 사용자 응답:', shouldNavigate);
+            
+            if (shouldNavigate) {
+              console.log('🚀 에디터로 이동 중... Product ID:', finalProductId);
+              // 상품 ID로 에디터 페이지 이동
+              navigate(`/editor/${finalProductId}`);
+            }
+          }, 1000);
+        } else if (notification.action_url) {
           console.log('🔗 action_url로 폴백:', notification.action_url);
           setTimeout(() => {
             const shouldNavigate = confirm(
-              `${notification.title}\n결과를 확인하시겠습니까?`
+              `✅ ${notification.title}\n\n${notification.message}\n\n결과를 확인하시겠습니까?`
             );
             if (shouldNavigate) {
-              window.open(notification.action_url, '_blank');
+              if (notification.action_url.startsWith('/')) {
+                navigate(notification.action_url);
+              } else {
+                window.open(notification.action_url, '_blank');
+              }
             }
           }, 1000);
-        } else {
-          console.log('⚠️ action_url도 없음');
         }
+      } else if (notification.message_type === 'error') {
+        // 실패 알림 처리
+        console.error('❌ 작업 실패:', notification.message);
+        // toast는 notificationService에서 이미 처리됨
+      } else if (notification.message_type === 'info') {
+        // 진행 중 알림
+        console.log('⏳ 작업 진행 중:', notification.message);
       }
-    } else {
-      console.log('⚠️ 알림 처리 조건 불만족:', {
+    } else if (notification.action_url) {
+      // 기타 알림의 경우 action_url이 있으면 처리
+      console.log('⚠️ 기타 알림 처리:', {
         service_type: notification.service_type,
-        has_data_url: !!notification.data_url
+        has_action_url: !!notification.action_url
       });
+      
+      if (notification.message_type === 'success') {
+        setTimeout(() => {
+          const shouldNavigate = confirm(
+            `${notification.title}\n\n${notification.message}\n\n확인하시겠습니까?`
+          );
+          if (shouldNavigate && notification.action_url) {
+            if (notification.action_url.startsWith('/')) {
+              navigate(notification.action_url);
+            } else {
+              window.open(notification.action_url, '_blank');
+            }
+          }
+        }, 1000);
+      }
     }
   };
 

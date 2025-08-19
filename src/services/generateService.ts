@@ -132,6 +132,7 @@ class GenerateService {
     const maxAttempts = Math.floor(maxWaitTime / pollInterval);
     
     let attempt = 0;
+    let lastStatus = '';
     
     toast.info('상세페이지를 생성하고 있습니다', {
       description: '잠시만 기다려주세요...'
@@ -142,9 +143,25 @@ class GenerateService {
         await new Promise(resolve => setTimeout(resolve, pollInterval));
         
         const status = await this.checkTaskStatus(taskId);
-        const progress = Math.min(90, (attempt / maxAttempts) * 100);
+        const currentStatus = status.data?.status || 'processing';
         
-        options.onProgress?.(progress, status.message || '처리 중...');
+        // 상태가 변경되었을 때만 토스트 알림
+        if (currentStatus !== lastStatus) {
+          lastStatus = currentStatus;
+          
+          if (currentStatus === 'processing') {
+            // 처리 중 상태 - 진행 단계별 메시지
+            const progressMessages = [
+              'AI가 상품 정보를 분석하고 있습니다...',
+              '최적의 레이아웃을 구성하고 있습니다...',
+              'HTML 코드를 생성하고 있습니다...',
+              '이미지를 최적화하고 있습니다...',
+              '마지막 검토를 진행하고 있습니다...'
+            ];
+            const messageIndex = Math.min(Math.floor(attempt / 10), progressMessages.length - 1);
+            options.onProgress?.(Math.min(90, (attempt / maxAttempts) * 100), progressMessages[messageIndex]);
+          }
+        }
         
         if (status.success && status.data?.status === 'completed') {
           options.onProgress?.(100, '완료!');
@@ -152,9 +169,14 @@ class GenerateService {
           // HTML 데이터가 있으면 콜백 호출
           if (status.data.html_list) {
             options.onComplete?.(status.data.html_list);
+            toast.success('상세페이지 생성이 완료되었습니다!', {
+              description: `${status.data.html_list.length}개의 섹션이 생성되었습니다.`
+            });
+          } else if (status.data.product_details_id) {
+            toast.success('상세페이지 생성이 완료되었습니다!', {
+              description: '곧 에디터로 이동합니다.'
+            });
           }
-          
-          toast.success('상세페이지 생성이 완료되었습니다!');
           
           return {
             success: true,
@@ -164,7 +186,11 @@ class GenerateService {
         }
         
         if (status.success && status.data?.status === 'failed') {
-          throw new Error(status.message || '생성 실패');
+          const errorMessage = status.data.error || status.message || '생성 실패';
+          toast.error('상세페이지 생성 실패', {
+            description: errorMessage
+          });
+          throw new Error(errorMessage);
         }
         
         attempt++;
@@ -210,34 +236,88 @@ class GenerateService {
       clearInterval(this.pollingIntervals.get(taskId));
     }
 
+    let failureCount = 0;
+    const maxFailures = 5;
+    let lastNotifiedStatus = '';
+
     const interval = setInterval(async () => {
       try {
         const status = await this.checkTaskStatus(taskId);
+        const currentStatus = status.data?.status || 'processing';
+        
+        // 상태가 변경되었을 때 알림
+        if (currentStatus !== lastNotifiedStatus) {
+          lastNotifiedStatus = currentStatus;
+          
+          if (currentStatus === 'processing') {
+            // 백그라운드에서 처리 중인 경우 간헐적으로 알림
+            console.log(`작업 ${taskId} 백그라운드에서 처리 중...`);
+          }
+        }
         
         if (status.success && status.data?.status === 'completed') {
           clearInterval(interval);
           this.pollingIntervals.delete(taskId);
           
-          // HTML 데이터가 있으면 콜백 호출, 없으면(404로 완료된 경우) 로그만
+          // HTML 데이터가 있으면 콜백 호출
           if (status.data.html_list) {
             options.onComplete?.(status.data.html_list);
-            console.log('백그라운드 폴링으로 완료 감지:', status.data.html_list);
+            toast.success('🎉 상세페이지 생성 완료!', {
+              description: `${status.data.html_list.length}개의 섹션이 성공적으로 생성되었습니다.`,
+              duration: 5000,
+              action: {
+                label: '에디터로 이동',
+                onClick: () => {
+                  // 에디터로 이동하는 로직은 컴포넌트에서 처리
+                  console.log('에디터로 이동 요청');
+                }
+              }
+            });
+          } else if (status.data.product_details_id) {
+            toast.success('🎉 상세페이지 생성 완료!', {
+              description: '에디터에서 결과를 확인하세요.',
+              duration: 5000
+            });
           } else {
-            console.log('작업 완료됨 (404로 인한 완료 감지):', taskId);
+            console.log('작업 완료됨 (상세 데이터 없음):', taskId);
           }
+          
+          // 성공 시 실패 카운트 리셋
+          failureCount = 0;
         }
         
         if (status.success && status.data?.status === 'failed') {
           clearInterval(interval);
           this.pollingIntervals.delete(taskId);
           
-          const error = new Error(status.message || '생성 실패');
+          const errorMessage = status.data.error || status.message || '생성 실패';
+          toast.error('상세페이지 생성 실패', {
+            description: errorMessage,
+            duration: 5000
+          });
+          
+          const error = new Error(errorMessage);
           options.onError?.(error);
         }
+        
+        // 성공적인 요청 시 실패 카운트 리셋
+        failureCount = 0;
+        
       } catch (error) {
         console.error('백그라운드 폴링 오류:', error);
-        // 5번 연속 실패하면 중단
-        // 실제로는 더 정교한 로직 필요
+        failureCount++;
+        
+        // 연속 실패 횟수 초과 시 중단
+        if (failureCount >= maxFailures) {
+          clearInterval(interval);
+          this.pollingIntervals.delete(taskId);
+          
+          toast.warning('작업 상태 확인 중단', {
+            description: '네트워크 문제로 상태 확인이 중단되었습니다. 나중에 다시 확인해주세요.'
+          });
+          
+          options.onError?.(new Error('폴링 실패 횟수 초과'));
+        }
       }
     }, 5000); // 5초마다 확인
 
@@ -248,16 +328,51 @@ class GenerateService {
       if (this.pollingIntervals.has(taskId)) {
         clearInterval(this.pollingIntervals.get(taskId));
         this.pollingIntervals.delete(taskId);
+        
+        toast.info('작업 모니터링 종료', {
+          description: '작업이 오래 걸리고 있습니다. 완료 시 알림을 받으실 수 있습니다.'
+        });
       }
     }, 600000);
   }
 
   /**
-   * 작업 상태 확인
+   * 작업 상태 확인 - Redis 상태 데이터를 기반으로 함
    */
   async checkTaskStatus(taskId: string): Promise<GenerateResponse> {
     try {
       const response = await axios.get<GenerateResponse>(`${API_URL}/status/${taskId}`);
+      
+      // Redis 상태 구조에 맞게 처리
+      // status: processing | completed | failed
+      console.log('작업 상태 확인:', { taskId, status: response.data });
+      
+      // Redis에서 가져온 상태를 그대로 사용
+      if (response.data.data?.status) {
+        const status = response.data.data.status;
+        
+        // 상태별 처리
+        if (status === 'processing') {
+          console.log(`작업 ${taskId} 처리 중...`);
+        } else if (status === 'completed') {
+          console.log(`작업 ${taskId} 완료!`);
+          // 결과 데이터도 함께 가져오기 시도
+          try {
+            const resultResponse = await axios.get(`${API_URL}/result/${taskId}`);
+            if (resultResponse.data?.data) {
+              response.data.data = {
+                ...response.data.data,
+                ...resultResponse.data.data
+              };
+            }
+          } catch (resultError) {
+            console.log('결과 데이터 조회 실패 (정상적인 경우일 수 있음):', resultError);
+          }
+        } else if (status === 'failed') {
+          console.error(`작업 ${taskId} 실패:`, response.data.data.error);
+        }
+      }
+      
       return response.data;
     } catch (error) {
       // 404 에러는 작업이 완료되어 상태 정보가 삭제된 것으로 간주

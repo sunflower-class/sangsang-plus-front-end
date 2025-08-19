@@ -55,6 +55,17 @@ const NotificationList: React.FC<NotificationListProps> = ({
     });
   };
 
+  const getServiceTypeLabel = (serviceType: string) => {
+    const labelMap: Record<string, string> = {
+      'html-generation': 'HTML 생성',
+      'product-details': '상세페이지',
+      'image-processing': '이미지 처리',
+      'data-sync': '데이터 동기화',
+      'system': '시스템'
+    };
+    return labelMap[serviceType] || serviceType;
+  };
+
   if (notifications.length === 0) {
     return (
       <div className="w-80">
@@ -129,8 +140,16 @@ const NotificationList: React.FC<NotificationListProps> = ({
                             {formatTimeAgo(notification.created_at)}
                           </span>
                           {notification.service_type && (
-                            <Badge variant="secondary" className="text-xs px-1.5 py-0">
-                              {notification.service_type}
+                            <Badge 
+                              variant={
+                                notification.service_type === 'html-generation' || 
+                                notification.service_type === 'product-details' 
+                                  ? 'default' 
+                                  : 'secondary'
+                              } 
+                              className="text-xs px-1.5 py-0"
+                            >
+                              {getServiceTypeLabel(notification.service_type)}
                             </Badge>
                           )}
                         </div>
