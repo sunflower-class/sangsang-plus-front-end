@@ -19,7 +19,7 @@ export const uploadFileReviews = (file, productName = null) => {
     formData.append('product_name', productName);
   }
 
-  return axios.post(`${API_BASE_URL}/review/upload-file`, formData, {
+  return axios.post(`${API_BASE_URL}/upload-file`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
@@ -43,7 +43,7 @@ export const uploadFileReviews = (file, productName = null) => {
  * @returns {Promise<object>} 일괄 분석 결과
  */
 export const addBatchManualReviews = (payload) => {
-  return axios.post(`${API_BASE_URL}/review/batch-manual`, payload, {
+  return axios.post(`${API_BASE_URL}/batch-manual`, payload, {
     headers: {
       'Content-Type': 'application/json',
     },
@@ -79,7 +79,7 @@ export const integratedAnalysis = (file = null, productName = null, manualReview
     formData.append('manual_reviews', JSON.stringify(manualReviews));
   }
 
-  return axios.post(`${API_BASE_URL}/review/integrated-analysis`, formData, {
+  return axios.post(`${API_BASE_URL}/integrated-analysis`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
