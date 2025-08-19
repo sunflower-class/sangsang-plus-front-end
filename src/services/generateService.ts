@@ -162,11 +162,18 @@ class GenerateService {
               '마지막 검토를 진행하고 있습니다...'
             ];
             const messageIndex = Math.min(Math.floor(attempt / 10), progressMessages.length - 1);
-            options.onProgress?.(Math.min(90, (attempt / maxAttempts) * 100), progressMessages[messageIndex]);
+            // 완료되지 않은 상태에서는 최대 95%까지만 표시
+            const progress = Math.min(95, Math.floor((attempt / maxAttempts) * 100));
+            options.onProgress?.(progress, progressMessages[messageIndex]);
           }
+        } else if (currentStatus === 'processing') {
+          // 같은 상태라도 진행률은 업데이트 (최대 95%까지)
+          const progress = Math.min(95, Math.floor((attempt / maxAttempts) * 100));
+          options.onProgress?.(progress, status.message || '처리 중...');
         }
         
         if (status.success && status.data?.status === 'completed') {
+          // 완료 시에만 100% 표시
           options.onProgress?.(100, '완료!');
           
           // HTML 데이터가 있으면 콜백 호출
@@ -189,6 +196,8 @@ class GenerateService {
         }
         
         if (status.success && status.data?.status === 'failed') {
+          // 실패 시 진행률 0으로 리셋
+          options.onProgress?.(0, '실패');
           const errorMessage = status.data.error || status.message || '생성 실패';
           toast.error('상세페이지 생성 실패', {
             description: errorMessage
@@ -204,7 +213,8 @@ class GenerateService {
       }
     }
     
-    // 시간 초과
+    // 시간 초과 - 진행률을 95%에서 유지
+    options.onProgress?.(95, '처리가 예상보다 오래 걸리고 있습니다...');
     toast.warning('생성이 예상보다 오래 걸리고 있습니다', {
       description: '완료되면 알림으로 안내해드립니다.'
     });

@@ -87,7 +87,7 @@ const Generate = () => {
     setIsGenerating(true);
     setCurrentStep(2);
     setGenerationStatus('AI가 상품 정보를 분석하고 있습니다...');
-    setGenerationProgress(20);
+    setGenerationProgress(10); // 초기 진행률을 20%에서 10%로 낮춤
 
     try {
       // 생성 요청 데이터 준비
@@ -426,7 +426,7 @@ const Generate = () => {
         <div className="grid grid-cols-3 gap-4 mt-8">
           <div className="text-center space-y-2">
             <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto ${
-              generationProgress >= 40 ? 'bg-accent' : 'bg-muted'
+              generationProgress >= 33 ? 'bg-accent' : 'bg-muted'
             }`}>
               <Brain className="h-6 w-6" />
             </div>
@@ -435,7 +435,7 @@ const Generate = () => {
           
           <div className="text-center space-y-2">
             <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto ${
-              generationProgress >= 70 ? 'bg-accent' : 'bg-muted'
+              generationProgress >= 66 ? 'bg-accent' : 'bg-muted'
             }`}>
               <Code className="h-6 w-6" />
             </div>
@@ -444,11 +444,11 @@ const Generate = () => {
           
           <div className="text-center space-y-2">
             <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto ${
-              generationProgress >= 90 ? 'bg-accent' : 'bg-muted'
+              generationProgress >= 100 ? 'bg-accent' : 'bg-muted'
             }`}>
               <ImageIcon className="h-6 w-6" />
             </div>
-            <p className="text-xs text-muted-foreground">이미지 처리</p>
+            <p className="text-xs text-muted-foreground">최종 검토</p>
           </div>
         </div>
       </CardContent>

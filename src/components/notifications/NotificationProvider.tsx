@@ -99,8 +99,12 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         const urlMatch = notification.data_url?.match(/\/product-details\/(\d+)/);
         const productId = urlMatch ? urlMatch[1] : null;
         
+        // action_url에서도 ID 추출 시도 (예: /product-details/30 -> 30)
+        const actionUrlMatch = notification.action_url?.match(/\/product-details\/(\d+)/);
+        const actionProductId = actionUrlMatch ? actionUrlMatch[1] : null;
+        
         // data_id가 직접 제공된 경우
-        const finalProductId = productId || notification.data_id;
+        const finalProductId = productId || actionProductId || notification.data_id;
         
         console.log('📍 추출된 상품 ID:', finalProductId);
         
@@ -119,15 +123,27 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
           }, 1000);
         } else if (notification.action_url) {
           console.log('🔗 action_url로 폴백:', notification.action_url);
+          
+          // action_url이 /product-details/로 시작하면 /editor/로 변경
+          let targetUrl = notification.action_url;
+          if (targetUrl.includes('/product-details/')) {
+            targetUrl = targetUrl.replace('/product-details/', '/editor/');
+            console.log('📝 URL 변환: product-details → editor:', targetUrl);
+          }
+          
           setTimeout(() => {
             const shouldNavigate = confirm(
               `✅ ${notification.title}\n\n${notification.message}\n\n결과를 확인하시겠습니까?`
             );
             if (shouldNavigate) {
-              if (notification.action_url.startsWith('/')) {
-                navigate(notification.action_url);
+              if (targetUrl.startsWith('/')) {
+                navigate(targetUrl);
+              } else if (targetUrl.includes('buildingbite.com')) {
+                // 절대 URL인 경우 경로 부분만 추출하여 navigate
+                const url = new URL(targetUrl);
+                navigate(url.pathname);
               } else {
-                window.open(notification.action_url, '_blank');
+                window.open(targetUrl, '_blank');
               }
             }
           }, 1000);
