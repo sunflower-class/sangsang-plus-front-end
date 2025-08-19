@@ -21,6 +21,9 @@ export interface GenerateResponse {
     html_list?: string[];
     status?: 'processing' | 'completed' | 'failed';
     estimated_completion_time?: string;
+    product_details_id?: number;
+    error?: string;
+    image_count?: number;
   };
 }
 
