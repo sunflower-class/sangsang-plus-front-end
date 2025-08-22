@@ -69,6 +69,10 @@ const QnA = () => {
   const [newReply, setNewReply] = useState("");
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
 
+  
+  // user가 없으면 localStorage에서 user_id를 가져옴
+  const userId = user?.id || localStorage.getItem("user_id");
+
   const fetchQuestions = useCallback(async () => {
       setIsLoading(true);
       setError(null);
@@ -171,8 +175,6 @@ const QnA = () => {
     }
 
     try {
-      // user가 없으면 localStorage에서 user_id를 가져옴
-      const userId = user?.id || localStorage.getItem("user_id");
       if (!userId) {
         toast.error("유저 정보가 없습니다. 다시 로그인 해주세요.");
         return;
@@ -620,7 +622,7 @@ const QnA = () => {
 
       {/* Chatbot Window */}
       {isChatbotOpen && (
-        <Chatbot onClose={() => setIsChatbotOpen(false)} />
+        <Chatbot onClose={() => setIsChatbotOpen(false)} userId={userId} />
       )}
     </div>
   );

@@ -15,15 +15,17 @@ interface Message {
   isUser: boolean;
   id?: number;
   conversationId?: string;
+  documentIds?: string[];
   showFeedback?: boolean;
   feedbackGiven?: 'positive' | 'negative' | null;
 }
 
 interface ChatbotProps {
   onClose: () => void;
+  userId: string;
 }
 
-const Chatbot: React.FC<ChatbotProps> = ({ onClose }) => {
+const Chatbot: React.FC<ChatbotProps> = ({ onClose, userId }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -71,6 +73,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose }) => {
         isUser: false,
         id: response.conversation_message_id,
         conversationId: response.conversation_id,
+        documentIds: response.document_ids,
         showFeedback: true,
         feedbackGiven: null
       };
@@ -135,13 +138,16 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose }) => {
     const message = messages[messageIndex];
     if (!message.id || !message.conversationId) return;
 
+    const feedback_type = feedbackType === 'positive' ? 'helpful' : 'not_helpful'
+
     try {
-      await addFeedback({
-        conversation_message_id: message.id,
+      const response = await addFeedback({
         conversation_id: message.conversationId,
-        feedback_type: feedbackType,
-        user_id: 'anonymous_user', // 실제 사용자 ID로 대체 필요
-        comment: feedbackType === 'positive' ? '도움이 되었습니다' : '답변이 부정확합니다'
+        message_id: message.id,
+        feedback_type,
+        user_id: userId,
+        additional_comment: feedbackType === 'positive' ? '도움이 되었습니다' : '답변이 부정확합니다',
+        document_ids: message.documentIds,
       });
 
       // 메시지 상태 업데이트
@@ -151,7 +157,12 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose }) => {
           : msg
       ));
 
-      toast.success(feedbackType === 'positive' ? '긍정적인 피드백이 등록되었습니다.' : '부정적인 피드백이 등록되었습니다.');
+      if (response && response.status === 'success') {
+        const resultText = feedbackType === 'positive' ? '긍정적인 피드백이 등록되었습니다.' : '부정적인 피드백이 등록되었습니다.'
+        toast.success(resultText);
+      } else {
+        toast.error('피드백 등록에 실패했습니다.');
+      }
     } catch (error) {
       console.error('Failed to submit feedback:', error);
       toast.error('피드백 등록에 실패했습니다.');
