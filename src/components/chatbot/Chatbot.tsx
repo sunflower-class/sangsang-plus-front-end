@@ -71,7 +71,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose, userId }) => {
       const botMessage: Message = { 
         text: botMessageText, 
         isUser: false,
-        id: response.conversation_message_id,
+        id: response.message_id,
         conversationId: response.conversation_id,
         documentIds: response.document_ids,
         showFeedback: true,
@@ -136,16 +136,17 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose, userId }) => {
 
   const handleFeedback = async (messageIndex: number, feedbackType: 'positive' | 'negative') => {
     const message = messages[messageIndex];
-    if (!message.id || !message.conversationId) return;
+    console.log({ message, messageIndex, feedbackType })
+    // if (!message.id || !message.conversationId) return;
 
     const feedback_type = feedbackType === 'positive' ? 'helpful' : 'not_helpful'
 
     try {
       const response = await addFeedback({
-        conversation_id: message.conversationId,
-        message_id: message.id,
+        conversation_id: message.conversationId ?? 0,
+        message_id: message.id ?? "",
         feedback_type,
-        user_id: userId,
+        user_id: userId ?? "",
         additional_comment: feedbackType === 'positive' ? '도움이 되었습니다' : '답변이 부정확합니다',
         document_ids: message.documentIds,
       });
