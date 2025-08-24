@@ -354,7 +354,7 @@ class GenerateService {
    */
   async checkTaskStatus(taskId: string): Promise<GenerateResponse> {
     try {
-      const response = await axios.get<GenerateResponse>(`${API_URL}/status/${taskId}`);
+      const response = await axios.get<GenerateResponse>(`${VITE_GENERATE_URL}/status/${taskId}`);
       
       // Redis 상태 구조에 맞게 처리
       // status: processing | completed | failed
@@ -371,7 +371,7 @@ class GenerateService {
           console.log(`작업 ${taskId} 완료!`);
           // 결과 데이터도 함께 가져오기 시도
           try {
-            const resultResponse = await axios.get(`${API_URL}/result/${taskId}`);
+            const resultResponse = await axios.get(`${VITE_GENERATE_URL}/result/${taskId}`);
             if (resultResponse.data?.data) {
               response.data.data = {
                 ...response.data.data,
