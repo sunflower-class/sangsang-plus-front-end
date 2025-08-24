@@ -158,7 +158,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose, userId }) => {
           : msg
       ));
 
-      if (response && response.status === 'success') {
+      if (response && response.success) {
         const resultText = feedbackType === 'positive' ? '긍정적인 피드백이 등록되었습니다.' : '부정적인 피드백이 등록되었습니다.'
         toast.success(resultText);
       } else {
