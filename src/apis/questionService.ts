@@ -56,7 +56,7 @@ export const chatQuery = (payload) => {
  * @returns {Promise<any>} The API response.
  */
 export const directAndSubmitPost = (payload) => {
-  return apiClient('post', '/posts/direct_pending', payload);
+  return apiClient('post', '/posts/summarize_and_submit', payload);
 };
 
 /**
