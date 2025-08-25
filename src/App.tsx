@@ -24,8 +24,8 @@ import AdminDashboard from "./pages/Admin/AdminDashboard";
 import TermsOfServicePage from "./pages/Policy/TermsOfServicePage";
 import PrivacyPolicyPage from "./pages/Policy/PrivacyPolicyPage";
 import CookiePolicyPage from "./pages/Policy/CookiePolicyPage";
-import ABTest from "./pages/ABTest/ABTest";
-import ABTestManager from "./pages/ABTest/ABTestManager";
+import ABTestDashboard from "./pages/ABTest/Dashboard";
+import ABTestSimpleTestSimulator from "./pages/ABTest/SimpleTestSimulator";
 import Payments from "./pages/Payments/Payments";
 
 const queryClient = new QueryClient();
@@ -44,8 +44,8 @@ const AppWithTokenRefresh = () => {
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
-              <Route path="/abtest" element={<ABTest />} />
-              <Route path="/abtest/manage" element={<ABTestManager />} />
+              <Route path="/abtest" element={<ABTestDashboard />} />
+              <Route path="/abtest/manage" element={<ABTestSimpleTestSimulator />} />
               
               {/* Policy Pages */}
               <Route path="/terms-of-service" element={<TermsOfServicePage />} />
