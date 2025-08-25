@@ -181,9 +181,9 @@ const QnA = () => {
       }
       
       // 제목과 내용을 합쳐서 검수 대기 목록에 추가
-      const combinedText = `제목: ${newQuestion.title}\n\n내용: ${newQuestion.content}`;
       await directAndSubmitPost({
-        text_content: combinedText,
+        content: newQuestion.content,
+        title: newQuestion.title,
         tags: ["사용자질문", "Q&A"]
       });
 
