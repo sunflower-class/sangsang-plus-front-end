@@ -240,8 +240,8 @@ const AdminDashboard = () => {
                   {pendingQnas.map((qna) => (
                     <TableRow key={qna.id}>
                       <TableCell className="font-medium">{qna.id.substring(0, 8)}...</TableCell>
-                      <TableCell className="max-w-md truncate">{qna.question}</TableCell>
-                      <TableCell className="max-w-md truncate">{qna.content}</TableCell>
+                      <TableCell className="truncate">{qna.question}</TableCell>
+                      <TableCell className="max-w-md truncate">{qna.content ?? "없음"}</TableCell>
                       <TableCell>{(qna.metadata?.author as string) || '알 수 없음'}</TableCell>
                       <TableCell>
                         {qna.metadata?.created_at 
@@ -274,7 +274,7 @@ const AdminDashboard = () => {
                               </div>
                               <div>
                                 <h3 className="font-semibold">내용:</h3>
-                                <p className="p-2 border rounded-md bg-muted-foreground/5">{selectedQnA?.content}</p>
+                                <p className="p-2 border rounded-md bg-muted-foreground/5">{selectedQnA?.content ?? "없음"}</p>
                               </div>
                               <div>
                                 <h3 className="font-semibold">답변:</h3>
