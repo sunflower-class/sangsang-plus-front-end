@@ -26,6 +26,7 @@ import { Badge } from '@/components/ui/data-display/badge';
 interface PendingQnA {
   id: string;
   question: string;
+  content: string;
   metadata: Record<string, unknown>;
 }
 
@@ -229,6 +230,7 @@ const AdminDashboard = () => {
                   <TableRow>
                     <TableHead>ID</TableHead>
                     <TableHead>질문</TableHead>
+                    <TableHead>내용</TableHead>
                     <TableHead>작성자</TableHead>
                     <TableHead>작성일</TableHead>
                     <TableHead className="text-right">액션</TableHead>
@@ -239,6 +241,7 @@ const AdminDashboard = () => {
                     <TableRow key={qna.id}>
                       <TableCell className="font-medium">{qna.id.substring(0, 8)}...</TableCell>
                       <TableCell className="max-w-md truncate">{qna.question}</TableCell>
+                      <TableCell className="max-w-md truncate">{qna.content}</TableCell>
                       <TableCell>{(qna.metadata?.author as string) || '알 수 없음'}</TableCell>
                       <TableCell>
                         {qna.metadata?.created_at 
@@ -268,6 +271,10 @@ const AdminDashboard = () => {
                               <div>
                                 <h3 className="font-semibold">질문:</h3>
                                 <p className="p-2 border rounded-md bg-muted-foreground/5">{selectedQnA?.question}</p>
+                              </div>
+                              <div>
+                                <h3 className="font-semibold">내용:</h3>
+                                <p className="p-2 border rounded-md bg-muted-foreground/5">{selectedQnA?.content}</p>
                               </div>
                               <div>
                                 <h3 className="font-semibold">답변:</h3>

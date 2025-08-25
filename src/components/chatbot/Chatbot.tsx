@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/form/input';
 import { Textarea } from '@/components/ui/form/textarea';
 import { ScrollArea } from '@/components/ui/layout/scroll-area';
 import { Send, Bot, User, Loader2, PlusCircle, ThumbsUp, ThumbsDown, X } from 'lucide-react';
-import { chatQuery, summarizeAndSubmitPost, addFeedback } from '@/apis/questionService';
+import { chatQuery, directAndSubmitPost, addFeedback } from '@/apis/questionService';
 import { toast } from 'sonner';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription
@@ -110,8 +110,8 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose, userId }) => {
       // 사용자가 편집한 제목과 내용을 하나의 텍스트로 결합
       const combinedText = `제목: ${draftTitle}\n\n내용: ${draftContent}`;
       
-      // summarizeAndSubmitPost API 호출
-      const response = await summarizeAndSubmitPost({
+      // directAndSubmitPost API 호출
+      const response = await directAndSubmitPost({
         text_content: combinedText,
         tags: ['챗봇_추천', 'AI생성']
       });
@@ -251,7 +251,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose, userId }) => {
                   ) : (
                     <>
                       <PlusCircle className="w-4 h-4 mr-2" />
-                      이 질문으로 검수 요청하기
+                      이 질문 게시판에 등록하기
                     </>
                   )}
                 </Button>

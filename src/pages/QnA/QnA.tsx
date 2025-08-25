@@ -34,7 +34,7 @@ import {
 } from "lucide-react";
 import Chatbot from "@/components/chatbot/Chatbot";
 import { toast } from "sonner";
-import { getRagQnaList, summarizeAndSubmitPost, getPendingQnas } from "@/apis/questionService";
+import { getRagQnaList, directAndSubmitPost, getPendingQnas } from "@/apis/questionService";
 
 interface Question {
   id: string;
@@ -182,7 +182,7 @@ const QnA = () => {
       
       // 제목과 내용을 합쳐서 검수 대기 목록에 추가
       const combinedText = `제목: ${newQuestion.title}\n\n내용: ${newQuestion.content}`;
-      await summarizeAndSubmitPost({
+      await directAndSubmitPost({
         text_content: combinedText,
         tags: ["사용자질문", "Q&A"]
       });

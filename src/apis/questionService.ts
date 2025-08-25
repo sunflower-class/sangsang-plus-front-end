@@ -55,8 +55,8 @@ export const chatQuery = (payload) => {
  * @param {string[]} [payload.tags] - 적용할 태그 리스트.
  * @returns {Promise<any>} The API response.
  */
-export const summarizeAndSubmitPost = (payload) => {
-  return apiClient('post', '/posts/summarize_and_submit', payload);
+export const directAndSubmitPost = (payload) => {
+  return apiClient('post', '/posts/direct_pending', payload);
 };
 
 /**
