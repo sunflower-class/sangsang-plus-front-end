@@ -107,12 +107,10 @@ const Chatbot: React.FC<ChatbotProps> = ({ onClose, userId }) => {
 
     setIsSubmittingQuestion(true);
     try {
-      // 사용자가 편집한 제목과 내용을 하나의 텍스트로 결합
-      const combinedText = `제목: ${draftTitle}\n\n내용: ${draftContent}`;
-      
       // directAndSubmitPost API 호출
       const response = await directAndSubmitPost({
-        text_content: combinedText,
+        title: draftTitle,
+        content: draftContent,
         tags: ['챗봇_추천', 'AI생성']
       });
 
