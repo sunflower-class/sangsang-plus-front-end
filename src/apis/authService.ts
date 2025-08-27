@@ -63,7 +63,11 @@ export const login = async (credentials: LoginRequest): Promise<AuthResponse> =>
     
     // JWT 토큰을 localStorage에 저장
     localStorage.setItem('jwt_token', token);
-    localStorage.setItem('refresh_token', refreshToken);
+    if (refreshToken) {
+      localStorage.setItem('refresh_token', refreshToken);
+    } else {
+      console.warn('Login: refresh token이 응답에 없음, 기존 token 유지');
+    }
     
     // axios 기본 헤더에 토큰 설정
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -103,7 +107,11 @@ export const signup = async (userData: SignupRequest): Promise<AuthResponse> => 
     
     // JWT 토큰을 localStorage에 저장
     localStorage.setItem('jwt_token', token);
-    localStorage.setItem('refresh_token', refreshToken);
+    if (refreshToken) {
+      localStorage.setItem('refresh_token', refreshToken);
+    } else {
+      console.warn('Signup: refresh token이 응답에 없음, 기존 token 유지');
+    }
     
     // axios 기본 헤더에 토큰 설정
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -135,8 +143,13 @@ export const logout = async (): Promise<void> => {
   try {
     // 서버에 로그아웃 요청 (선택적)
     const token = localStorage.getItem('jwt_token');
+    const refreshToken = localStorage.getItem('refresh_token');
+    
     if (token) {
-      await axios.post(`${AUTH_URL}/logout`, {}, {
+      // refresh_token이 있으면 body에 포함하여 완전한 로그아웃 구현
+      const requestBody = refreshToken ? { refresh_token: refreshToken } : {};
+      
+      await axios.post(`${AUTH_URL}/logout`, requestBody, {
         headers: { Authorization: `Bearer ${token}` }
       });
     }
@@ -184,7 +197,14 @@ export const refreshToken = async (): Promise<string> => {
     // 새 토큰을 저장
     console.log('💾 localStorage에 토큰 저장 중...');
     localStorage.setItem('jwt_token', accessToken);
-    localStorage.setItem('refresh_token', newRefreshToken);
+    
+    // refresh token은 있을 때만 업데이트 (null이면 기존 것 유지)
+    if (newRefreshToken) {
+      localStorage.setItem('refresh_token', newRefreshToken);
+      console.log('✅ 새 refresh token 저장됨');
+    } else {
+      console.log('⚠️ 새 refresh token이 없음, 기존 token 유지');
+    }
     
     // 저장 확인
     const savedJwtToken = localStorage.getItem('jwt_token');
