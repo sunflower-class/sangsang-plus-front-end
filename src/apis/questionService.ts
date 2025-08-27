@@ -49,14 +49,14 @@ export const chatQuery = (payload) => {
 
 /**
  * 게시글 요약 및 검수 대기 질문 등록
- * POST /management/posts/summarize_and_submit
+ * POST /management/posts/direct_pending
  * @param {object} payload - The request payload.
  * @param {string} payload.text_content - 요약 및 질문 생성을 위한 원본 텍스트.
  * @param {string[]} [payload.tags] - 적용할 태그 리스트.
  * @returns {Promise<any>} The API response.
  */
 export const directAndSubmitPost = (payload) => {
-  return apiClient('post', '/posts/summarize_and_submit', payload);
+  return apiClient('post', '/posts/direct_pending', payload);
 };
 
 /**
