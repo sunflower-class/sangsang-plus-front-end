@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef, FC, FormEvent } from 'react';
-import Chart from 'chart.js/auto';
+import React, { useState, useEffect, FC, FormEvent } from 'react';
 import styles from './Dashboard.module.css'; // CSS 모듈로 import
 
 // =================================================================
@@ -13,27 +12,35 @@ interface Test {
   status: 'active' | 'completed' | 'waiting_for_winner_selection';
 }
 
-interface AnalyticsOverview {
-  total_tests?: number;
-  active_tests?: number;
-  total_clicks?: number;
-  total_purchases?: number;
-  total_cart_additions?: number;
-  total_revenue?: number;
-  avg_cvr?: number;
-  avg_cart_add_rate?: number;
-}
+
 
 interface VariantAnalysis {
+  variant_id: number;
   variant_name: string;
   ai_score: number;
   ai_confidence: number;
+  confidence_details: {
+    calculation_method: string;
+    sample_size: number;
+    conversion_rate?: number;
+    std_error?: number;
+    margin_of_error?: number;
+    base_confidence?: number;
+    variability_factor?: number;
+    final_confidence?: number;
+    formula: string;
+    linear_confidence?: number;
+  };
   cvr: number;
   cart_add_rate: number;
   cart_conversion_rate: number;
-  revenue_per_click: number;
+
+  error_rate: number;
+  avg_page_load_time: number;
   clicks: number;
-  confidence_details: any;
+  cart_additions: number;
+  purchases: number;
+  revenue: number;
 }
 
 interface AIAnalysis {
@@ -41,66 +48,25 @@ interface AIAnalysis {
   variant_analysis: VariantAnalysis[];
 }
 
-interface PerformanceResult {
-  product_name: string;
-  winner: 'baseline' | 'challenger' | 'tie';
-  baseline_impressions: number;
-  baseline_clicks: number;
-  baseline_purchases: number;
-  baseline_click_rate: number;
-  baseline_conversion_rate: number;
-  challenger_impressions: number;
-  challenger_clicks: number;
-  challenger_purchases: number;
-  challenger_click_rate: number;
-  challenger_conversion_rate: number;
-  improvement_rate: number;
-  baseline_cvr?: number;
-  challenger_cvr?: number;
-  baseline_cart_add_rate?: number;
-  challenger_cart_add_rate?: number;
-  baseline_cart_cvr?: number;
-  challenger_cart_cvr?: number;
-}
 
-interface LogEntry {
-  timestamp: string;
-  message: string;
-}
 
 const API_BASE_URL = 'http://localhost:8000/api/abtest';
 
 const Dashboard: FC = () => {
     const [currentTestId, setCurrentTestId] = useState<number | null>(null);
     const [currentTests, setCurrentTests] = useState<Test[]>([]);
-    const [analyticsOverview, setAnalyticsOverview] = useState<AnalyticsOverview>({});
-    const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
-    const [recentResults, setRecentResults] = useState<PerformanceResult[]>([]);
-    const [logs, setLogs] = useState<LogEntry[]>([]);
-    const [view, setView] = useState<'all' | 'create' | 'analysis' | 'history'>('all');
 
-    const chartContainerRef = useRef<HTMLCanvasElement>(null);
-    const chartInstanceRef = useRef<Chart | null>(null);
+    const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
+    const [view, setView] = useState<'all' | 'create' | 'analysis'>('all');
+
+
 
     const loadData = () => {
         fetch(`${API_BASE_URL}/list`).then(res => res.json()).then(data => setCurrentTests(data.tests || [])).catch(console.error);
-        fetch(`${API_BASE_URL}/analytics/overview`).then(res => res.json()).then(setAnalyticsOverview).catch(console.error);
-        fetch(`${API_BASE_URL}/analytics/performance`).then(res => res.json()).then(data => {
-            setRecentResults(data.performance || []);
-            updatePerformanceChart(data.performance || []);
-        }).catch(console.error);
-        fetch(`${API_BASE_URL}/logs`).then(res => res.json()).then(data => setLogs(data.logs || [])).catch(console.error);
+
     };
     
-    const updatePerformanceChart = (performanceData: PerformanceResult[]) => {
-        const ctx = chartContainerRef.current?.getContext('2d');
-        if (!ctx) return;
-        if (chartInstanceRef.current) chartInstanceRef.current.destroy();
 
-        chartInstanceRef.current = new Chart(ctx, {
-            type: 'bar', data: { labels: performanceData.map(item => item.product_name), datasets: [ { label: 'A안 CVR (%)', data: performanceData.map(item => (item.baseline_cvr || 0) * 100), backgroundColor: 'rgba(54, 162, 235, 0.8)' }, { label: 'B안 CVR (%)', data: performanceData.map(item => (item.challenger_cvr || 0) * 100), backgroundColor: 'rgba(255, 99, 132, 0.8)' } ] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
-        });
-    };
 
     useEffect(() => {
         loadData();
@@ -126,6 +92,35 @@ const Dashboard: FC = () => {
             if (res.ok) { alert('테스트 생성 성공!'); loadData(); } else { const err = await res.json(); alert(`에러: ${err.detail}`); }
         } catch (error) { alert('네트워크 오류가 발생했습니다.'); }
     };
+
+    const handleDeleteTest = async (testId: number, testName: string) => {
+        if (!confirm(`정말로 "${testName}" 테스트를 삭제하시겠습니까?`)) {
+            return;
+        }
+        
+        try {
+            const res = await fetch(`${API_BASE_URL}/${testId}`, { 
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            if (res.ok) {
+                alert('테스트가 성공적으로 삭제되었습니다.');
+                loadData();
+                // 현재 선택된 테스트가 삭제된 테스트라면 선택 해제
+                if (currentTestId === testId) {
+                    setCurrentTestId(null);
+                }
+            } else {
+                const err = await res.json();
+                alert(`삭제 실패: ${err.detail}`);
+            }
+        } catch (error) {
+            alert('네트워크 오류가 발생했습니다.');
+        }
+    };
+
+
     
     const getStatusClass = (status: Test['status']) => {
         const map = { active: styles.statusActive, completed: styles.statusCompleted, waiting_for_winner_selection: styles.statusWaiting };
@@ -141,7 +136,6 @@ const Dashboard: FC = () => {
                      <button onClick={() => setView('all')} className={`${styles.navBtn} ${view === 'all' ? styles.active : ''}`}>🏠 전체 보기</button>
                      <button onClick={() => setView('create')} className={`${styles.navBtn} ${view === 'create' ? styles.active : ''}`}>🆕 새 테스트</button>
                      <button onClick={() => setView('analysis')} className={`${styles.navBtn} ${view === 'analysis' ? styles.active : ''}`}>🧠 AI 분석</button>
-                     <button onClick={() => setView('history')} className={`${styles.navBtn} ${view === 'history' ? styles.active : ''}`}>📈 히스토리</button>
                      <button onClick={() => window.open('/abtest/manage', '_blank')} className={styles.navBtn}>🎮 시뮬레이터</button>
                      <button onClick={loadData} className={styles.navBtn} style={{background: '#667eea', color: 'white'}}>🔄 새로고침</button>
                 </div>
@@ -171,7 +165,15 @@ const Dashboard: FC = () => {
                             {currentTests.length > 0 ? currentTests.map(test => (
                                 <div key={test.id} className={styles.testCard}>
                                     <h3>{test.name} <span className={`${styles.testStatus} ${getStatusClass(test.status)}`}>{test.status}</span></h3>
-                                    <button onClick={() => setCurrentTestId(test.id)}>분석 보기</button>
+                                    <div className={styles.testCardButtons}>
+                                        <button onClick={() => setCurrentTestId(test.id)} className={styles.btnAnalysis}>분석 보기</button>
+                                        <button 
+                                            onClick={() => handleDeleteTest(test.id, test.name)}
+                                            className={styles.btnDelete}
+                                        >
+                                            삭제
+                                        </button>
+                                    </div>
                                 </div>
                             )) : <p>진행중인 테스트가 없습니다.</p>}
                         </div>
@@ -183,12 +185,73 @@ const Dashboard: FC = () => {
                         <h2>🧠 AI 분석 결과 (Test ID: {currentTestId})</h2>
                         {aiAnalysis ? (
                             <div>
+                                {/* AI 가중치 섹션 */}
+                                <div className={styles.aiWeightsSection}>
+                                    <h3>AI 가중치</h3>
+                                    <div className={styles.weightsGrid}>
+                                        {Object.entries(aiAnalysis.ai_weights).map(([key, value]) => (
+                                            <div key={key} className={styles.weightItem}>
+                                                <span className={styles.weightLabel}>{key.toUpperCase()}</span>
+                                                <span className={styles.weightValue}>{(value * 100).toFixed(1)}%</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* 각 버전 분석 결과 */}
                                 {aiAnalysis.variant_analysis.map(v => (
-                                    <div key={v.variant_name} className={styles.aiAnalysisItem}>
-                                        <h4>{v.variant_name}</h4>
-                                        <p><strong>AI 점수: {v.ai_score.toFixed(3)}</strong></p>
-                                        <p>신뢰도: {(v.ai_confidence * 100).toFixed(1)}%</p>
-                                        <p>CVR: {(v.cvr * 100).toFixed(2)}%</p>
+                                    <div key={v.variant_id} className={styles.variantAnalysisSection}>
+                                        <h3>{v.variant_name}</h3>
+                                        <div className={styles.metricsGrid}>
+                                            {/* 이미지와 동일한 7개 지표 */}
+                                            <div className={`${styles.metricCard} ${styles.aiScore}`}>
+                                                <span className={styles.metricLabel}>AI 점수</span>
+                                                <span className={styles.metricValue}>{v.ai_score.toFixed(3)}</span>
+                                            </div>
+                                            <div className={`${styles.metricCard} ${styles.confidence}`}>
+                                                <span className={styles.metricLabel}>신뢰도</span>
+                                                <span className={styles.metricValue}>{(v.ai_confidence * 100).toFixed(1)}%</span>
+                                            </div>
+                                            <div className={styles.metricCard}>
+                                                <span className={styles.metricLabel}>CVR</span>
+                                                <span className={styles.metricValue}>{(v.cvr * 100).toFixed(2)}%</span>
+                                            </div>
+                                            <div className={styles.metricCard}>
+                                                <span className={styles.metricLabel}>장바구니 추가율</span>
+                                                <span className={styles.metricValue}>{(v.cart_add_rate * 100).toFixed(2)}%</span>
+                                            </div>
+                                            <div className={styles.metricCard}>
+                                                <span className={styles.metricLabel}>장바구니 전환율</span>
+                                                <span className={styles.metricValue}>{(v.cart_conversion_rate * 100).toFixed(2)}%</span>
+                                            </div>
+                                            <div className={styles.metricCard}>
+                                                <span className={styles.metricLabel}>매출</span>
+                                                <span className={styles.metricValue}>₩{v.revenue.toLocaleString()}</span>
+                                            </div>
+                                            <div className={styles.metricCard}>
+                                                <span className={styles.metricLabel}>클릭수</span>
+                                                <span className={styles.metricValue}>{v.clicks}</span>
+                                            </div>
+                                        </div>
+
+                                        {/* 신뢰도 계산 세부사항 */}
+                                        <div className={styles.confidenceDetails}>
+                                            <h4>신뢰도 계산 세부사항</h4>
+                                            <div className={styles.confidenceInfo}>
+                                                <p><strong>계산 방법:</strong> {v.confidence_details.calculation_method}</p>
+                                                <p><strong>샘플 크기:</strong> {v.confidence_details.sample_size}</p>
+                                                {v.confidence_details.conversion_rate && (
+                                                    <p><strong>전환율:</strong> {v.confidence_details.conversion_rate}%</p>
+                                                )}
+                                                {v.confidence_details.std_error && (
+                                                    <p><strong>표준 오차:</strong> {v.confidence_details.std_error}</p>
+                                                )}
+                                                {v.confidence_details.margin_of_error && (
+                                                    <p><strong>오차 한계:</strong> ±{v.confidence_details.margin_of_error}%</p>
+                                                )}
+                                                <p><strong>공식:</strong> {v.confidence_details.formula}</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -196,54 +259,6 @@ const Dashboard: FC = () => {
                      </div>
                  )}
 
-                {view === 'all' && (
-                     <div className={styles.card}>
-                        <h2>📈 핵심 성과 지표</h2>
-                        <div className={styles.metricsGrid}>
-                            <div className={styles.metric}><span className={styles.metricValue}>{analyticsOverview.total_tests ?? 0}</span><span className={styles.metricLabel}>총 테스트</span></div>
-                            <div className={styles.metric}><span className={styles.metricValue}>{analyticsOverview.active_tests ?? 0}</span><span className={styles.metricLabel}>활성 테스트</span></div>
-                            <div className={styles.metric}><span className={styles.metricValue}>{analyticsOverview.total_clicks ?? 0}</span><span className={styles.metricLabel}>총 클릭</span></div>
-                            <div className={styles.metric}><span className={styles.metricValue}>₩{analyticsOverview.total_revenue?.toLocaleString() ?? 0}</span><span className={styles.metricLabel}>총 매출</span></div>
-                        </div>
-                    </div>
-                )}
-                
-                {(view === 'all' || view === 'history') && (
-                    <div className={`${styles.card} ${styles.fullWidth}`}>
-                        <h2>📊 성과 비교 차트</h2>
-                        <div className={styles.chartContainer}>
-                            <canvas ref={chartContainerRef}></canvas>
-                        </div>
-                    </div>
-                )}
-
-                {(view === 'all' || view === 'history') && (
-                     <div className={`${styles.card} ${styles.fullWidth}`}>
-                        <h2>🏆 최근 테스트 결과</h2>
-                        <div id="recentResults">
-                            {recentResults.length > 0 ? recentResults.map(r => (
-                                <div key={r.product_name} className={styles.resultItem}>
-                                    <h4>{r.product_name} <span className={`${styles.badge} ${r.winner === 'tie' ? styles.tie : styles.winner}`}>{r.winner} 승</span></h4>
-                                    <p>전환율 개선: {r.improvement_rate.toFixed(2)}%</p>
-                                </div>
-                            )) : <p>최근 결과가 없습니다.</p>}
-                        </div>
-                    </div>
-                )}
-                
-                {(view === 'all' || view === 'history') && (
-                    <div className={`${styles.card} ${styles.fullWidth}`}>
-                        <h2>📝 실시간 로그</h2>
-                        <div className={styles.logsContainer}>
-                            {logs.length > 0 ? logs.slice(0, 20).map((log, index) => (
-                                <div key={`${log.timestamp}-${index}`} className={styles.logEntry}>
-                                    <span className={styles.logTimestamp}>{new Date(log.timestamp).toLocaleTimeString()}</span>
-                                    <span className={styles.logMessage}>{log.message}</span>
-                                </div>
-                            )) : <p>로그가 없습니다.</p>}
-                        </div>
-                    </div>
-                )}
             </div>
         </div>
     );

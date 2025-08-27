@@ -14,8 +14,11 @@ interface VersionStats {
   clicks: number;
   purchases: number;
   cart_additions: number;
+  cart_purchases: number;
   errors: number;
   page_loads: number;
+  total_load_time: number;
+  revenue: number;
 }
 
 interface Stats {
@@ -32,8 +35,8 @@ const SimpleTestSimulator: FC = () => {
     const [selectedTestId, setSelectedTestId] = useState<string>('');
     const [isRunning, setIsRunning] = useState<boolean>(false);
     const [stats, setStats] = useState<Stats>({
-        versionA: { clicks: 0, purchases: 0, cart_additions: 0, errors: 0, page_loads: 0 },
-        versionB: { clicks: 0, purchases: 0, cart_additions: 0, errors: 0, page_loads: 0 }
+        versionA: { clicks: 0, purchases: 0, cart_additions: 0, cart_purchases: 0, errors: 0, page_loads: 0, total_load_time: 0, revenue: 0 },
+        versionB: { clicks: 0, purchases: 0, cart_additions: 0, cart_purchases: 0, errors: 0, page_loads: 0, total_load_time: 0, revenue: 0 }
     });
     const [simulationSpeed, setSimulationSpeed] = useState<SimulationSpeed>('fast');
     const simulationIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -58,7 +61,7 @@ const SimpleTestSimulator: FC = () => {
         };
     }, [isRunning, simulationSpeed, selectedTestId]);
 
-    const recordInteraction = (version: 'A' | 'B', interactionType: string) => {
+    const recordInteraction = (version: 'A' | 'B', interactionType: string, loadTime?: number) => {
         if (!selectedTestId) {
             console.warn("시뮬레이션을 위해 테스트를 먼저 선택해주세요.");
             return;
@@ -67,6 +70,7 @@ const SimpleTestSimulator: FC = () => {
         const statsKeyMap: { [key: string]: keyof VersionStats } = {
             'click': 'clicks',
             'purchase': 'purchases',
+            'cart_purchase': 'cart_purchases',
             'add_to_cart': 'cart_additions',
             'error': 'errors',
             'page_load': 'page_loads',
@@ -74,7 +78,26 @@ const SimpleTestSimulator: FC = () => {
 
         const key = statsKeyMap[interactionType];
         if (key) {
-            setStats(prev => ({ ...prev, [`version${version}`]: { ...prev[`version${version}`], [key]: prev[`version${version}`][key] + 1 } }));
+            setStats(prev => {
+                const newStats = { ...prev };
+                const versionKey = `version${version}` as keyof Stats;
+                newStats[versionKey] = { ...newStats[versionKey] };
+                
+                // 기본 카운터 증가
+                newStats[versionKey][key] = newStats[versionKey][key] + 1;
+                
+                // 특별한 처리
+                if (interactionType === 'page_load' && loadTime) {
+                    newStats[versionKey].total_load_time += loadTime;
+                }
+                
+                // 매출 계산 (구매 시 1,200,000원)
+                if (interactionType === 'purchase' || interactionType === 'cart_purchase') {
+                    newStats[versionKey].revenue += 1200000;
+                }
+                
+                return newStats;
+            });
         }
 
         fetch(`${API_BASE_URL}/interaction`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ test_id: parseInt(selectedTestId), variant: version === 'A' ? 'baseline' : 'challenger', interaction_type: interactionType }) }).catch(err => console.error("API Error:", err));
@@ -82,33 +105,62 @@ const SimpleTestSimulator: FC = () => {
 
     const runAutoSimulation = () => {
         const version = Math.random() < 0.5 ? 'A' : 'B';
-        setTimeout(() => recordInteraction(version, 'page_load'), Math.random() * 50);
+        const loadTime = 500 + Math.random() * 2000; // 500ms ~ 2.5초
+        
+        // 페이지 로드 (100%)
+        setTimeout(() => recordInteraction(version, 'page_load', loadTime), Math.random() * 50);
+        
+        // 클릭 (70%)
         if (Math.random() < 0.7) {
             setTimeout(() => recordInteraction(version, 'click'), 100 + Math.random() * 100);
+            
+            // 장바구니 추가 (30%)
             if (Math.random() < 0.3) {
-                 setTimeout(() => recordInteraction(version, 'add_to_cart'), 300 + Math.random() * 200);
-                 if (Math.random() < 0.4) {
-                     setTimeout(() => recordInteraction(version, 'purchase'), 500 + Math.random() * 300);
-                 }
-            } else if (Math.random() < 0.15) {
-                 setTimeout(() => recordInteraction(version, 'purchase'), 400 + Math.random() * 200);
+                setTimeout(() => recordInteraction(version, 'add_to_cart'), 300 + Math.random() * 200);
+                
+                // 장바구니에서 구매 (40%)
+                if (Math.random() < 0.4) {
+                    setTimeout(() => recordInteraction(version, 'cart_purchase'), 500 + Math.random() * 300);
+                }
+            } 
+            // 직접 구매 (15%)
+            else if (Math.random() < 0.15) {
+                setTimeout(() => recordInteraction(version, 'purchase'), 400 + Math.random() * 200);
             }
         }
-        if (Math.random() < 0.02) setTimeout(() => recordInteraction(version, 'error'), Math.random() * 800);
+        
+        // 오류 (2%)
+        if (Math.random() < 0.02) {
+            setTimeout(() => recordInteraction(version, 'error'), Math.random() * 800);
+        }
     };
 
     const handleReset = () => {
         setIsRunning(false);
         if (simulationIntervalRef.current) clearInterval(simulationIntervalRef.current);
         setStats({
-            versionA: { clicks: 0, purchases: 0, cart_additions: 0, errors: 0, page_loads: 0 },
-            versionB: { clicks: 0, purchases: 0, cart_additions: 0, errors: 0, page_loads: 0 }
+            versionA: { clicks: 0, purchases: 0, cart_additions: 0, cart_purchases: 0, errors: 0, page_loads: 0, total_load_time: 0, revenue: 0 },
+            versionB: { clicks: 0, purchases: 0, cart_additions: 0, cart_purchases: 0, errors: 0, page_loads: 0, total_load_time: 0, revenue: 0 }
         });
     };
     
     const { versionA, versionB } = stats;
+    
+    // 핵심 지표 계산
     const cvrA = versionA.clicks > 0 ? ((versionA.purchases / versionA.clicks) * 100) : 0;
     const cvrB = versionB.clicks > 0 ? ((versionB.purchases / versionB.clicks) * 100) : 0;
+    
+    // 보조 지표 계산
+    const cartRateA = versionA.clicks > 0 ? ((versionA.cart_additions / versionA.clicks) * 100) : 0;
+    const cartRateB = versionB.clicks > 0 ? ((versionB.cart_additions / versionB.clicks) * 100) : 0;
+    const cartCvrA = versionA.cart_additions > 0 ? ((versionA.cart_purchases / versionA.cart_additions) * 100) : 0;
+    const cartCvrB = versionB.cart_additions > 0 ? ((versionB.cart_purchases / versionB.cart_additions) * 100) : 0;
+    
+    // 가드레일 지표 계산
+    const errorRateA = versionA.clicks > 0 ? ((versionA.errors / versionA.clicks) * 100) : 0;
+    const errorRateB = versionB.clicks > 0 ? ((versionB.errors / versionB.clicks) * 100) : 0;
+    const avgLoadTimeA = versionA.page_loads > 0 ? (versionA.total_load_time / versionA.page_loads) : 0;
+    const avgLoadTimeB = versionB.page_loads > 0 ? (versionB.total_load_time / versionB.page_loads) : 0;
 
     return (
         <div className={styles.container}>
@@ -154,17 +206,87 @@ const SimpleTestSimulator: FC = () => {
 
             <div className={styles.statsPanel}>
                 <h3>📊 실시간 통계</h3>
-                <div className={styles.statsGrid}>
-                    <div className={styles.statItem}><span className={styles.statValue}>{stats.versionA.clicks}</span><span className={styles.statLabel}>A 클릭</span></div>
-                    <div className={styles.statItem}><span className={styles.statValue}>{stats.versionB.clicks}</span><span className={styles.statLabel}>B 클릭</span></div>
-                    <div className={styles.statItem}><span className={styles.statValue}>{stats.versionA.cart_additions}</span><span className={styles.statLabel}>A 장바구니</span></div>
-                    <div className={styles.statItem}><span className={styles.statValue}>{stats.versionB.cart_additions}</span><span className={styles.statLabel}>B 장바구니</span></div>
-                    <div className={styles.statItem}><span className={styles.statValue}>{stats.versionA.purchases}</span><span className={styles.statLabel}>A 구매</span></div>
-                    <div className={styles.statItem}><span className={styles.statValue}>{stats.versionB.purchases}</span><span className={styles.statLabel}>B 구매</span></div>
-                    <div className={styles.statItem}><span className={styles.statValue}>{cvrA.toFixed(2)}%</span><span className={styles.statLabel}>A CVR</span></div>
-                    <div className={styles.statItem}><span className={styles.statValue}>{cvrB.toFixed(2)}%</span><span className={styles.statLabel}>B CVR</span></div>
-                    <div className={styles.statItem}><span className={styles.statValue}>{stats.versionA.errors}</span><span className={styles.statLabel}>A 오류</span></div>
-                    <div className={styles.statItem}><span className={styles.statValue}>{stats.versionB.errors}</span><span className={styles.statLabel}>B 오류</span></div>
+                <p className={styles.flowDescription}>새로운 플로우: 클릭 → 장바구니 추가 → 구매하기 | 가드레일: 오류, 로드시간</p>
+                
+                {/* 핵심 지표 */}
+                <div className={styles.statsSection}>
+                    <h4>핵심 지표 (Core Metrics)</h4>
+                    <div className={styles.statsGrid}>
+                        <div className={styles.statItem}><span className={styles.statValue}>{stats.versionA.clicks}</span><span className={styles.statLabel}>버전 A 클릭</span></div>
+                        <div className={styles.statItem}><span className={styles.statValue}>{stats.versionB.clicks}</span><span className={styles.statLabel}>버전 B 클릭</span></div>
+                        <div className={styles.statItem}><span className={styles.statValue}>{stats.versionA.purchases}</span><span className={styles.statLabel}>버전 A 구매</span></div>
+                        <div className={styles.statItem}><span className={styles.statValue}>{stats.versionB.purchases}</span><span className={styles.statLabel}>버전 B 구매</span></div>
+                        <div className={styles.statItem}><span className={styles.statValue}>{cvrA.toFixed(2)}%</span><span className={styles.statLabel}>버전 A CVR</span></div>
+                        <div className={styles.statItem}><span className={styles.statValue}>{cvrB.toFixed(2)}%</span><span className={styles.statLabel}>버전 B CVR</span></div>
+                    </div>
+                </div>
+
+                {/* 보조 지표 */}
+                <div className={styles.statsSection}>
+                    <h4>보조 지표 (Auxiliary Metrics)</h4>
+                    <div className={styles.statsGrid}>
+                        <div className={styles.statItem}><span className={styles.statValue}>{stats.versionA.cart_additions}</span><span className={styles.statLabel}>버전 A 장바구니</span></div>
+                        <div className={styles.statItem}><span className={styles.statValue}>{stats.versionB.cart_additions}</span><span className={styles.statLabel}>버전 B 장바구니</span></div>
+                        <div className={styles.statItem}><span className={styles.statValue}>{cartRateA.toFixed(2)}%</span><span className={styles.statLabel}>버전 A 장바구니율</span></div>
+                        <div className={styles.statItem}><span className={styles.statValue}>{cartRateB.toFixed(2)}%</span><span className={styles.statLabel}>버전 B 장바구니율</span></div>
+                        <div className={styles.statItem}><span className={styles.statValue}>{cartCvrA.toFixed(2)}%</span><span className={styles.statLabel}>버전 A 장바구니 CVR</span></div>
+                        <div className={styles.statItem}><span className={styles.statValue}>{cartCvrB.toFixed(2)}%</span><span className={styles.statLabel}>버전 B 장바구니 CVR</span></div>
+                        <div className={styles.statItem}><span className={styles.statValue}>₩{versionA.revenue.toLocaleString()}</span><span className={styles.statLabel}>버전 A 매출</span></div>
+                        <div className={styles.statItem}><span className={styles.statValue}>₩{versionB.revenue.toLocaleString()}</span><span className={styles.statLabel}>버전 B 매출</span></div>
+                    </div>
+                </div>
+
+                {/* 가드레일 지표 */}
+                <div className={styles.statsSection}>
+                    <h4>가드레일 지표 (Guardrail Metrics)</h4>
+                    <div className={styles.statsGrid}>
+                        <div className={styles.statItem}><span className={styles.statValue}>{stats.versionA.errors}</span><span className={styles.statLabel}>버전 A 오류</span></div>
+                        <div className={styles.statItem}><span className={styles.statValue}>{stats.versionB.errors}</span><span className={styles.statLabel}>버전 B 오류</span></div>
+                        <div className={styles.statItem}><span className={styles.statValue}>{errorRateA.toFixed(2)}%</span><span className={styles.statLabel}>버전 A 오류율</span></div>
+                        <div className={styles.statItem}><span className={styles.statValue}>{errorRateB.toFixed(2)}%</span><span className={styles.statLabel}>버전 B 오류율</span></div>
+                        <div className={styles.statItem}><span className={styles.statValue}>{avgLoadTimeA.toFixed(0)}ms</span><span className={styles.statLabel}>버전 A 로드시간</span></div>
+                        <div className={styles.statItem}><span className={styles.statValue}>{avgLoadTimeB.toFixed(0)}ms</span><span className={styles.statLabel}>버전 B 로드시간</span></div>
+                    </div>
+                </div>
+
+                {/* 자동 시뮬레이션 확률 설정 */}
+                <div className={styles.statsSection}>
+                    <h4>자동 시뮬레이션 확률 설정 (Automatic Simulation Probability Settings)</h4>
+                    <div className={styles.probabilityGrid}>
+                        <div className={styles.probabilityItem}>
+                            <span className={styles.probabilityLabel}>페이지 로드</span>
+                            <span className={styles.probabilityValue}>100%</span>
+                            <span className={styles.probabilityDesc}>(모든 방문자)</span>
+                        </div>
+                        <div className={styles.probabilityItem}>
+                            <span className={styles.probabilityLabel}>클릭</span>
+                            <span className={styles.probabilityValue}>70%</span>
+                            <span className={styles.probabilityDesc}>(페이지 로드 후)</span>
+                        </div>
+                        <div className={styles.probabilityItem}>
+                            <span className={styles.probabilityLabel}>장바구니 추가</span>
+                            <span className={styles.probabilityValue}>30%</span>
+                            <span className={styles.probabilityDesc}>(클릭 후)</span>
+                        </div>
+                        <div className={styles.probabilityItem}>
+                            <span className={styles.probabilityLabel}>장바구니 구매</span>
+                            <span className={styles.probabilityValue}>40%</span>
+                            <span className={styles.probabilityDesc}>(장바구니 추가 후)</span>
+                        </div>
+                        <div className={styles.probabilityItem}>
+                            <span className={styles.probabilityLabel}>직접 구매</span>
+                            <span className={styles.probabilityValue}>15%</span>
+                            <span className={styles.probabilityDesc}>(클릭 후)</span>
+                        </div>
+                        <div className={styles.probabilityItem}>
+                            <span className={styles.probabilityLabel}>오류</span>
+                            <span className={styles.probabilityValue}>2%</span>
+                            <span className={styles.probabilityDesc}>(랜덤)</span>
+                        </div>
+                    </div>
+                    <div className={styles.flowDescription}>
+                        <strong>실제 방문자 플로우 시뮬레이션:</strong> 페이지 로드 → 클릭(70%) → [장바구니 추가(30%) → 장바구니 구매(40%)] 또는 [직접 구매(15%)] + 오류(2%)
+                    </div>
                 </div>
             </div>
         </div>
