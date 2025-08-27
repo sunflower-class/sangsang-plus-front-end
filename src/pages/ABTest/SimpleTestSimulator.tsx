@@ -184,6 +184,7 @@ const SimpleTestSimulator: FC = () => {
                     {isRunning ? '⏹️ 시뮬레이션 중지' : '🚀 시뮬레이션 시작'}
                 </button>
                 <button onClick={handleReset} className={`${styles.controlBtn} ${styles.btnReset}`}>🔄 초기화</button>
+                <button onClick={() => window.location.href = '/abtest'} className={`${styles.controlBtn} ${styles.btnDashboard}`}>📊 대시보드로 이동</button>
             </div>
             
             <div className={styles.simulatorGrid}>

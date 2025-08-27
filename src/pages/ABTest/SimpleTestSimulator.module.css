@@ -178,6 +178,8 @@
 .btnStart:hover { background: #2f855a; }
 .btnReset { background: #e53e3e; }
 .btnReset:hover { background: #c53030; }
+.btnDashboard { background: #667eea; }
+.btnDashboard:hover { background: #5a67d8; }
 
 /* 시뮬레이터 확장 스타일 */
 .flowDescription {
