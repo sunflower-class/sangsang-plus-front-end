@@ -131,12 +131,12 @@ const Dashboard: FC = () => {
                 <h1>AI 기반 A/B 테스트 자동화 플랫폼</h1>
                 <p>실시간 테스트 현황 및 성과 분석</p>
                 <div className={styles.navigationButtons}>
-                     <button onClick={() => setView('all')} className={`${styles.navBtn} ${view === 'all' ? styles.active : ''}`}>🏠 전체 보기</button>
-                     <button onClick={() => setView('create')} className={`${styles.navBtn} ${view === 'create' ? styles.active : ''}`}>🆕 새 테스트</button>
-                     <button onClick={() => setView('analysis')} className={`${styles.navBtn} ${view === 'analysis' ? styles.active : ''}`}>🧠 AI 분석</button>
-                     <button onClick={() => window.open('/abtest/manage', '_blank')} className={styles.navBtn}>🎮 시뮬레이터</button>
-                     <button onClick={() => window.open('/abtest/winner', '_blank')} className={styles.navBtn}>🏆 승자 선택</button>
-                     <button onClick={loadData} className={styles.navBtn} style={{background: '#667eea', color: 'white'}}>🔄 새로고침</button>
+                     <button onClick={() => setView('all')} className={`${styles.navBtn} ${view === 'all' ? styles.active : ''}`}>전체 보기</button>
+                     <button onClick={() => setView('create')} className={`${styles.navBtn} ${view === 'create' ? styles.active : ''}`}>새 테스트</button>
+                     <button onClick={() => setView('analysis')} className={`${styles.navBtn} ${view === 'analysis' ? styles.active : ''}`}>AI 분석</button>
+                     <button onClick={() => window.open('/abtest/manage', '_blank')} className={styles.navBtn}>시뮬레이터</button>
+                     <button onClick={() => window.open('/abtest/winner', '_blank')} className={styles.navBtn}>승자 선택</button>
+                     <button onClick={loadData} className={styles.navBtn} style={{background: '#667eea', color: 'white'}}>새로고침</button>
                 </div>
             </header>
 

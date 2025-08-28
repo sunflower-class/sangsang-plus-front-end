@@ -165,13 +165,13 @@ const WinnerSelection: React.FC = () => {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>🏆 승자 선택 및 관리</CardTitle>
+            <CardTitle>승자 선택 및 관리</CardTitle>
             <Button
               onClick={() => navigate('/abtest')}
               variant="outline"
               className="flex items-center gap-2"
             >
-              📊 대시보드로 돌아가기
+              대시보드로 돌아가기
             </Button>
           </div>
         </CardHeader>
@@ -261,7 +261,7 @@ const WinnerSelection: React.FC = () => {
                                     <h5 className="font-semibold">변형 {variant.variant_id}</h5>
                                     {isAiRecommended && (
                                       <span className="px-2 py-1 bg-blue-500 text-white text-xs rounded-full">
-                                        🤖 AI 추천
+                                        AI 추천
                                       </span>
                                     )}
                                   </div>
@@ -311,7 +311,7 @@ const WinnerSelection: React.FC = () => {
                         
                         return (
                           <option key={variant.variant_id} value={variant.variant_id}>
-                            변형 {variant.variant_id} (AI점수: {variant.ai_score.toFixed(3)}) {isAiRecommended ? '🤖 AI 추천' : ''}
+                            변형 {variant.variant_id} (AI점수: {variant.ai_score.toFixed(3)}) {isAiRecommended ? 'AI 추천' : ''}
                           </option>
                         );
                       })}
@@ -325,7 +325,7 @@ const WinnerSelection: React.FC = () => {
                           : 'bg-green-500 hover:bg-green-600'
                       }`}
                     >
-                      {selectWinnerMutation.isPending ? '선택 중...' : '👤 수동 승자 선택'}
+                      {selectWinnerMutation.isPending ? '선택 중...' : '수동 승자 선택'}
                     </Button>
                   </div>
 
@@ -334,14 +334,14 @@ const WinnerSelection: React.FC = () => {
                     disabled={!winnerStatus?.winner_selected}
                     className="bg-purple-500 hover:bg-purple-600"
                   >
-                    🔄 다음 사이클
+                    다음 사이클
                   </Button>
                 </div>
 
                 {/* 다음 사이클 생성 폼 */}
                 {showNextCycleForm && (
                   <div className="border rounded-lg p-4 bg-blue-50">
-                    <h3 className="text-lg font-semibold mb-3">🔄 다음 사이클 생성</h3>
+                    <h3 className="text-lg font-semibold mb-3">다음 사이클 생성</h3>
                     <div className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium mb-2">
