@@ -33,6 +33,7 @@ const API_BASE_URL = 'http://localhost:8000/api/abtest';
 const SimpleTestSimulator: FC = () => {
     const [tests, setTests] = useState<Test[]>([]);
     const [selectedTestId, setSelectedTestId] = useState<string>('');
+    const [selectedDetail, setSelectedDetail] = useState(undefined);
     const [isRunning, setIsRunning] = useState<boolean>(false);
     const [stats, setStats] = useState<Stats>({
         versionA: { clicks: 0, purchases: 0, cart_additions: 0, cart_purchases: 0, errors: 0, page_loads: 0, total_load_time: 0, revenue: 0 },
@@ -44,6 +45,18 @@ const SimpleTestSimulator: FC = () => {
     const speedSettings: Record<SimulationSpeed, number> = {
         slow: 4000, normal: 2000, fast: 800, turbo: 300,
     };
+
+    const handleChangeOption = async (e: ChangeEvent<HTMLSelectElement>) => {        
+        setSelectedTestId(e.target.value)
+        if (!e.target.value) {
+            setSelectedDetail(undefined)
+            return
+        }
+        fetch(`${API_BASE_URL}/test/${e.target.value}`)
+          .then(res => res.json())
+          .then(data => setSelectedDetail(data))
+          .catch(console.error);
+    }
     
     useEffect(() => {
         fetch(`${API_BASE_URL}/list`)
@@ -166,7 +179,7 @@ const SimpleTestSimulator: FC = () => {
         <div className={styles.container}>
             <h1>A/B 테스트 시뮬레이터</h1>
             <div className={styles.controls}>
-                <select value={selectedTestId} onChange={(e: ChangeEvent<HTMLSelectElement>) => setSelectedTestId(e.target.value)}>
+                <select value={selectedTestId} onChange={handleChangeOption}>
                     <option value="">테스트를 선택하세요...</option>
                     {tests.map(test => (
                         <option key={test.id} value={test.id} disabled={test.status === 'completed'}>
@@ -191,9 +204,11 @@ const SimpleTestSimulator: FC = () => {
                 {(['A', 'B'] as const).map(v => (
                     <div className={styles.versionCard} key={v}>
                         <h2>버전 {v} {v === 'A' ? '(현재)' : '(AI 생성)'}</h2>
-                        <div className={styles.productImage}>📱</div>
-                        <div className={styles.productTitle}>스마트폰 Pro Max</div>
-                        <div className={styles.productPrice}>₩1,200,000</div>
+                        <div className={styles.productImage}>
+                            {selectedDetail === undefined ? "📱" : <img src={v === 'A' ? selectedDetail?.baseline_image_url : selectedDetail?.challenger_image_url} alt={`상품 이미지 ${v}`} />}
+                        </div>
+                        {/* <div className={styles.productTitle}>스마트폰 Pro Max</div>
+                        <div className={styles.productPrice}>₩1,200,000</div> */}
                         <div className={styles.actionButtons}>
                             <button className={`${styles.btn} ${styles.btnView}`} onClick={() => recordInteraction(v, 'page_load')}>로드</button>
                             <button className={`${styles.btn} ${styles.btnView}`} onClick={() => recordInteraction(v, 'click')}>클릭</button>
