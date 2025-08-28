@@ -43,7 +43,7 @@ const SimpleTestSimulator: FC = () => {
     const simulationIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
     const speedSettings: Record<SimulationSpeed, number> = {
-        slow: 4000, normal: 2000, fast: 800, turbo: 300,
+        slow: 2000, normal: 1000, fast: 400, turbo: 150,
     };
 
     const handleChangeOption = async (e: ChangeEvent<HTMLSelectElement>) => {        
