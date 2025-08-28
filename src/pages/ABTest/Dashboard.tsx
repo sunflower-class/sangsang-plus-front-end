@@ -12,8 +12,6 @@ interface Test {
   status: 'active' | 'completed' | 'waiting_for_winner_selection';
 }
 
-
-
 interface VariantAnalysis {
   variant_id: number;
   variant_name: string;
@@ -130,7 +128,7 @@ const Dashboard: FC = () => {
     return (
         <div className={styles.container}>
             <header>
-                <h1>🤖 AI 기반 A/B 테스트 자동화 플랫폼</h1>
+                <h1>AI 기반 A/B 테스트 자동화 플랫폼</h1>
                 <p>실시간 테스트 현황 및 성과 분석</p>
                 <div className={styles.navigationButtons}>
                      <button onClick={() => setView('all')} className={`${styles.navBtn} ${view === 'all' ? styles.active : ''}`}>🏠 전체 보기</button>
@@ -144,7 +142,7 @@ const Dashboard: FC = () => {
             <div className={styles.dashboardGrid}>
                 {(view === 'all' || view === 'create') && (
                     <div className={styles.card}>
-                        <h2>🆕 이미지 기반 A/B 테스트 생성</h2>
+                        <h2>이미지 기반 A/B 테스트 생성</h2>
                         <form onSubmit={handleCreateTest}>
                             <div className={styles.formGroup}><label htmlFor="testName">테스트 이름:</label><input type="text" id="testName" name="testName" placeholder="테스트 이름을 입력하세요" required /></div>
                             <div className={styles.formGroup}><label htmlFor="productId">상품 ID:</label><input type="text" id="productId" name="productId" placeholder="PROD_001" required /></div>
@@ -160,7 +158,7 @@ const Dashboard: FC = () => {
                 
                  {(view === 'all' || view === 'analysis') && (
                     <div className={styles.card}>
-                        <h2>📊 현재 테스트 현황</h2>
+                        <h2>현재 테스트 현황</h2>
                         <div id="currentTests">
                             {currentTests.length > 0 ? currentTests.map(test => (
                                 <div key={test.id} className={styles.testCard}>
@@ -182,7 +180,7 @@ const Dashboard: FC = () => {
 
                  {(view === 'all' || view === 'analysis') && currentTestId && (
                      <div className={styles.card}>
-                        <h2>🧠 AI 분석 결과 (Test ID: {currentTestId})</h2>
+                        <h2>AI 분석 결과 (Test ID: {currentTestId})</h2>
                         {aiAnalysis ? (
                             <div>
                                 {/* AI 가중치 섹션 */}

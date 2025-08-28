@@ -164,7 +164,7 @@ const SimpleTestSimulator: FC = () => {
 
     return (
         <div className={styles.container}>
-            <h1>🧪 A/B 테스트 시뮬레이터</h1>
+            <h1>A/B 테스트 시뮬레이터</h1>
             <div className={styles.controls}>
                 <select value={selectedTestId} onChange={(e: ChangeEvent<HTMLSelectElement>) => setSelectedTestId(e.target.value)}>
                     <option value="">테스트를 선택하세요...</option>
@@ -175,16 +175,16 @@ const SimpleTestSimulator: FC = () => {
                     ))}
                 </select>
                 <select value={simulationSpeed} onChange={(e: ChangeEvent<HTMLSelectElement>) => setSimulationSpeed(e.target.value as SimulationSpeed)}>
-                    <option value="slow">🐌 느림</option>
-                    <option value="normal">🚶 보통</option>
-                    <option value="fast">🏃 빠름</option>
-                    <option value="turbo">🚀 터보</option>
+                    <option value="slow">느림</option>
+                    <option value="normal">보통</option>
+                    <option value="fast">빠름</option>
+                    <option value="turbo">터보</option>
                 </select>
                 <button onClick={() => setIsRunning(!isRunning)} className={`${styles.controlBtn} ${isRunning ? styles.btnReset : styles.btnStart}`}>
-                    {isRunning ? '⏹️ 시뮬레이션 중지' : '🚀 시뮬레이션 시작'}
+                    {isRunning ? '시뮬레이션 중지' : '시뮬레이션 시작'}
                 </button>
-                <button onClick={handleReset} className={`${styles.controlBtn} ${styles.btnReset}`}>🔄 초기화</button>
-                <button onClick={() => window.location.href = '/abtest'} className={`${styles.controlBtn} ${styles.btnDashboard}`}>📊 대시보드로 이동</button>
+                <button onClick={handleReset} className={`${styles.controlBtn} ${styles.btnReset}`}>초기화</button>
+                <button onClick={() => window.location.href = '/abtest'} className={`${styles.controlBtn} ${styles.btnDashboard}`}>대시보드로 이동</button>
             </div>
             
             <div className={styles.simulatorGrid}>
@@ -206,7 +206,7 @@ const SimpleTestSimulator: FC = () => {
             </div>
 
             <div className={styles.statsPanel}>
-                <h3>📊 실시간 통계</h3>
+                <h3>실시간 통계</h3>
                 <p className={styles.flowDescription}>새로운 플로우: 클릭 → 장바구니 추가 → 구매하기 | 가드레일: 오류, 로드시간</p>
                 
                 {/* 핵심 지표 */}
@@ -214,10 +214,12 @@ const SimpleTestSimulator: FC = () => {
                     <h4>핵심 지표 (Core Metrics)</h4>
                     <div className={styles.statsGrid}>
                         <div className={styles.statItem}><span className={styles.statValue}>{stats.versionA.clicks}</span><span className={styles.statLabel}>버전 A 클릭</span></div>
-                        <div className={styles.statItem}><span className={styles.statValue}>{stats.versionB.clicks}</span><span className={styles.statLabel}>버전 B 클릭</span></div>
                         <div className={styles.statItem}><span className={styles.statValue}>{stats.versionA.purchases}</span><span className={styles.statLabel}>버전 A 구매</span></div>
-                        <div className={styles.statItem}><span className={styles.statValue}>{stats.versionB.purchases}</span><span className={styles.statLabel}>버전 B 구매</span></div>
                         <div className={styles.statItem}><span className={styles.statValue}>{cvrA.toFixed(2)}%</span><span className={styles.statLabel}>버전 A CVR</span></div>
+                    </div>
+                    <div className={styles.statsGrid}>
+                        <div className={styles.statItem}><span className={styles.statValue}>{stats.versionB.clicks}</span><span className={styles.statLabel}>버전 B 클릭</span></div>
+                        <div className={styles.statItem}><span className={styles.statValue}>{stats.versionB.purchases}</span><span className={styles.statLabel}>버전 B 구매</span></div>
                         <div className={styles.statItem}><span className={styles.statValue}>{cvrB.toFixed(2)}%</span><span className={styles.statLabel}>버전 B CVR</span></div>
                     </div>
                 </div>
@@ -227,12 +229,14 @@ const SimpleTestSimulator: FC = () => {
                     <h4>보조 지표 (Auxiliary Metrics)</h4>
                     <div className={styles.statsGrid}>
                         <div className={styles.statItem}><span className={styles.statValue}>{stats.versionA.cart_additions}</span><span className={styles.statLabel}>버전 A 장바구니</span></div>
-                        <div className={styles.statItem}><span className={styles.statValue}>{stats.versionB.cart_additions}</span><span className={styles.statLabel}>버전 B 장바구니</span></div>
                         <div className={styles.statItem}><span className={styles.statValue}>{cartRateA.toFixed(2)}%</span><span className={styles.statLabel}>버전 A 장바구니율</span></div>
-                        <div className={styles.statItem}><span className={styles.statValue}>{cartRateB.toFixed(2)}%</span><span className={styles.statLabel}>버전 B 장바구니율</span></div>
                         <div className={styles.statItem}><span className={styles.statValue}>{cartCvrA.toFixed(2)}%</span><span className={styles.statLabel}>버전 A 장바구니 CVR</span></div>
-                        <div className={styles.statItem}><span className={styles.statValue}>{cartCvrB.toFixed(2)}%</span><span className={styles.statLabel}>버전 B 장바구니 CVR</span></div>
                         <div className={styles.statItem}><span className={styles.statValue}>₩{versionA.revenue.toLocaleString()}</span><span className={styles.statLabel}>버전 A 매출</span></div>
+                    </div>
+                    <div className={styles.statsGrid}>
+                        <div className={styles.statItem}><span className={styles.statValue}>{stats.versionB.cart_additions}</span><span className={styles.statLabel}>버전 B 장바구니</span></div>
+                        <div className={styles.statItem}><span className={styles.statValue}>{cartRateB.toFixed(2)}%</span><span className={styles.statLabel}>버전 B 장바구니율</span></div>
+                        <div className={styles.statItem}><span className={styles.statValue}>{cartCvrB.toFixed(2)}%</span><span className={styles.statLabel}>버전 B 장바구니 CVR</span></div>
                         <div className={styles.statItem}><span className={styles.statValue}>₩{versionB.revenue.toLocaleString()}</span><span className={styles.statLabel}>버전 B 매출</span></div>
                     </div>
                 </div>
@@ -242,10 +246,12 @@ const SimpleTestSimulator: FC = () => {
                     <h4>가드레일 지표 (Guardrail Metrics)</h4>
                     <div className={styles.statsGrid}>
                         <div className={styles.statItem}><span className={styles.statValue}>{stats.versionA.errors}</span><span className={styles.statLabel}>버전 A 오류</span></div>
-                        <div className={styles.statItem}><span className={styles.statValue}>{stats.versionB.errors}</span><span className={styles.statLabel}>버전 B 오류</span></div>
                         <div className={styles.statItem}><span className={styles.statValue}>{errorRateA.toFixed(2)}%</span><span className={styles.statLabel}>버전 A 오류율</span></div>
-                        <div className={styles.statItem}><span className={styles.statValue}>{errorRateB.toFixed(2)}%</span><span className={styles.statLabel}>버전 B 오류율</span></div>
                         <div className={styles.statItem}><span className={styles.statValue}>{avgLoadTimeA.toFixed(0)}ms</span><span className={styles.statLabel}>버전 A 로드시간</span></div>
+                    </div>
+                    <div className={styles.statsGrid}>
+                        <div className={styles.statItem}><span className={styles.statValue}>{stats.versionB.errors}</span><span className={styles.statLabel}>버전 B 오류</span></div>
+                        <div className={styles.statItem}><span className={styles.statValue}>{errorRateB.toFixed(2)}%</span><span className={styles.statLabel}>버전 B 오류율</span></div>
                         <div className={styles.statItem}><span className={styles.statValue}>{avgLoadTimeB.toFixed(0)}ms</span><span className={styles.statLabel}>버전 B 로드시간</span></div>
                     </div>
                 </div>
