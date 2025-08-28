@@ -26,6 +26,7 @@ import PrivacyPolicyPage from "./pages/Policy/PrivacyPolicyPage";
 import CookiePolicyPage from "./pages/Policy/CookiePolicyPage";
 import ABTestDashboard from "./pages/ABTest/Dashboard";
 import ABTestSimpleTestSimulator from "./pages/ABTest/SimpleTestSimulator";
+import WinnerSelection from "./pages/ABTest/WinnerSelection";
 import Payments from "./pages/Payments/Payments";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ const AppWithTokenRefresh = () => {
               <Route path="/signup" element={<Signup />} />
               <Route path="/abtest" element={<ABTestDashboard />} />
               <Route path="/abtest/manage" element={<ABTestSimpleTestSimulator />} />
+              <Route path="/abtest/winner" element={<WinnerSelection />} />
               
               {/* Policy Pages */}
               <Route path="/terms-of-service" element={<TermsOfServicePage />} />
