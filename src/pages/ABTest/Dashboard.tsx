@@ -135,6 +135,7 @@ const Dashboard: FC = () => {
                      <button onClick={() => setView('create')} className={`${styles.navBtn} ${view === 'create' ? styles.active : ''}`}>🆕 새 테스트</button>
                      <button onClick={() => setView('analysis')} className={`${styles.navBtn} ${view === 'analysis' ? styles.active : ''}`}>🧠 AI 분석</button>
                      <button onClick={() => window.open('/abtest/manage', '_blank')} className={styles.navBtn}>🎮 시뮬레이터</button>
+                     <button onClick={() => window.open('/abtest/winner', '_blank')} className={styles.navBtn}>🏆 승자 선택</button>
                      <button onClick={loadData} className={styles.navBtn} style={{background: '#667eea', color: 'white'}}>🔄 새로고침</button>
                 </div>
             </header>
@@ -165,6 +166,13 @@ const Dashboard: FC = () => {
                                     <h3>{test.name} <span className={`${styles.testStatus} ${getStatusClass(test.status)}`}>{test.status}</span></h3>
                                     <div className={styles.testCardButtons}>
                                         <button onClick={() => setCurrentTestId(test.id)} className={styles.btnAnalysis}>분석 보기</button>
+                                        <button 
+                                            onClick={() => window.open(`/abtest/winner?testId=${test.id.toString()}`, '_blank')}
+                                            className={styles.btnAnalysis}
+                                            style={{background: '#8b5cf6'}}
+                                        >
+                                            승자 선택
+                                        </button>
                                         <button 
                                             onClick={() => handleDeleteTest(test.id, test.name)}
                                             className={styles.btnDelete}

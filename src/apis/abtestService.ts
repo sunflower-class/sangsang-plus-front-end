@@ -50,7 +50,22 @@ export const createTest = (data: CreateTestRequest) =>
 /**
  * A/B 테스트 목록 조회
  */
-export const getAbTests = () => requestWrapper<TestListResponse>(() => api.get('/list'));
+export const getAbTests = () => requestWrapper<{tests: Array<{
+  id: number;
+  name: string;
+  status: string;
+  created_at: string;
+  product_id: string;
+  total_impressions: number;
+  total_clicks: number;
+  total_purchases: number;
+  baseline_impressions: number;
+  baseline_purchases: number;
+  challenger_impressions: number;
+  challenger_purchases: number;
+  baseline_description: string;
+  challenger_description: string;
+}>}>(() => api.get('/list'));
 
 /**
  * A/B 테스트 상세 조회
@@ -121,6 +136,59 @@ export const banditVariant = (testId: string, userId: string, sessionId?: string
   return requestWrapper<VariantAssignmentResponse>(() => api.get(`/${testId}/variant-bandit/${userId}`, { params }));
 };
 
+// 승자 선택 관련 API
+export const getWinnerStatus = (testId: string) =>
+  requestWrapper<{
+    status: string;
+    ai_winner_id?: string;
+    manual_winner_id?: string;
+    winner_selected: boolean;
+    can_select_winner: boolean;
+    message: string;
+  }>(() => api.get(`/test/${testId}/winner-status`));
+
+export const getAIAnalysis = (testId: string) =>
+  requestWrapper<{
+    ai_weights: Record<string, number>;
+    variant_analysis: Array<{
+      variant_id: string;
+      variant_name: string;
+      ai_score: number;
+      ai_confidence: number;
+      cvr: number;
+      cart_add_rate: number;
+      cart_conversion_rate: number;
+      error_rate: number;
+      avg_page_load_time: number;
+      clicks: number;
+      cart_additions: number;
+      purchases: number;
+      revenue: number;
+    }>;
+  }>(() => api.get(`/test/${testId}/ai-analysis`));
+
+export const determineAIWinner = (testId: string) =>
+  requestWrapper<{ status: string; message: string; ai_winner_id?: string }>(() => 
+    api.post(`/test/${testId}/determine-winner`)
+  );
+
+export const selectWinner = (testId: string, variantId: string) =>
+  requestWrapper<{ status: string; message: string; selected_winner_id: string }>(() => 
+    api.post(`/test/${testId}/select-winner/${variantId}`)
+  );
+
+export const nextCycle = (testId: string, challengerImageUrl: string) =>
+  requestWrapper<{ 
+    status: string; 
+    message: string; 
+    new_test_id: number;
+    new_test_name: string;
+  }>(() => 
+    api.post(`/test/${testId}/next-cycle`, {
+      challenger_image_url: challengerImageUrl
+    })
+  );
+
 
 export default {
   createTestWithBrief,
@@ -140,4 +208,9 @@ export default {
   startLongTermMonitoring,
   recordLongTermMetrics,
   getEvents,
+  getWinnerStatus,
+  getAIAnalysis,
+  determineAIWinner,
+  selectWinner,
+  nextCycle,
 };
