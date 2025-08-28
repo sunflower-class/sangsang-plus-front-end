@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import abtestService from '@/apis/abtestService';
 import { Button } from '@/components/ui/form/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/layout/card';
@@ -53,9 +53,12 @@ interface AIAnalysis {
 
 const WinnerSelection: React.FC = () => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [selectedTestId, setSelectedTestId] = useState<string>('');
   const [selectedVariantId, setSelectedVariantId] = useState<string>('');
+  const [newChallengerImageUrl, setNewChallengerImageUrl] = useState<string>('');
+  const [showNextCycleForm, setShowNextCycleForm] = useState<boolean>(false);
 
   // 테스트 목록 조회
   const { data: tests, isLoading: testsLoading } = useQuery({
@@ -96,14 +99,7 @@ const WinnerSelection: React.FC = () => {
     enabled: !!selectedTestId,
   });
 
-  // AI 승자 결정 뮤테이션
-  const determineWinnerMutation = useMutation({
-    mutationFn: (testId: string) => abtestService.determineAIWinner(testId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['winner-status', selectedTestId] });
-      queryClient.invalidateQueries({ queryKey: ['ai-analysis', selectedTestId] });
-    },
-  });
+
 
   // 수동 승자 선택 뮤테이션
   const selectWinnerMutation = useMutation({
@@ -111,24 +107,33 @@ const WinnerSelection: React.FC = () => {
       abtestService.selectWinner(testId, variantId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['winner-status', selectedTestId] });
+      queryClient.invalidateQueries({ queryKey: ['abtests', 'list'] });
       setSelectedVariantId('');
+      alert('승자가 선택되었습니다!');
+    },
+    onError: (error) => {
+      alert(`승자 선택 실패: ${error.message}`);
     },
   });
 
   // 테스트 사이클 진행 뮤테이션
   const nextCycleMutation = useMutation({
-    mutationFn: (testId: string) => abtestService.nextCycle(testId),
-    onSuccess: () => {
+    mutationFn: (imageUrl: string) => abtestService.nextCycle(selectedTestId, imageUrl),
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['winner-status', selectedTestId] });
       queryClient.invalidateQueries({ queryKey: ['abtests', 'list'] });
+      alert(`다음 사이클이 생성되었습니다! 새 테스트 ID: ${data.new_test_id}`);
+      setShowNextCycleForm(false);
+      setNewChallengerImageUrl('');
+      // 새로 생성된 테스트로 이동
+      navigate(`/abtest/winner?testId=${data.new_test_id}`);
+    },
+    onError: (error) => {
+      alert(`다음 사이클 생성 실패: ${error.message}`);
     },
   });
 
-  const handleDetermineWinner = () => {
-    if (selectedTestId) {
-      determineWinnerMutation.mutate(selectedTestId);
-    }
-  };
+
 
   const handleSelectWinner = () => {
     if (selectedTestId && selectedVariantId) {
@@ -136,11 +141,7 @@ const WinnerSelection: React.FC = () => {
     }
   };
 
-  const handleNextCycle = () => {
-    if (selectedTestId) {
-      nextCycleMutation.mutate(selectedTestId);
-    }
-  };
+
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; color: string }> = {
@@ -163,7 +164,16 @@ const WinnerSelection: React.FC = () => {
     <div className="container mx-auto py-8 max-w-6xl space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>🏆 승자 선택 및 관리</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>🏆 승자 선택 및 관리</CardTitle>
+            <Button
+              onClick={() => navigate('/abtest')}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              📊 대시보드로 돌아가기
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -232,32 +242,54 @@ const WinnerSelection: React.FC = () => {
                       <div>
                         <h4 className="font-medium mb-2">변형 분석</h4>
                         <div className="grid gap-4">
-                          {aiAnalysis.variant_analysis.map((variant) => (
-                            <div key={variant.variant_id} className="border rounded p-4">
-                              <div className="flex items-center justify-between mb-3">
-                                <h5 className="font-semibold">변형 {variant.variant_id}</h5>
-                                <div className="flex gap-2">
-                                  <span className="px-2 py-1 bg-blue-100 rounded text-sm">
-                                    AI 점수: {variant.ai_score.toFixed(3)}
-                                  </span>
-                                  <span className="px-2 py-1 bg-green-100 rounded text-sm">
-                                    신뢰도: {((variant.ai_confidence || 0) * 100).toFixed(1)}%
-                                  </span>
+                          {aiAnalysis.variant_analysis.map((variant) => {
+                            // AI 점수가 가장 높은 변형 찾기
+                            const maxAiScore = Math.max(...aiAnalysis.variant_analysis.map(v => v.ai_score));
+                            const isAiRecommended = variant.ai_score === maxAiScore;
+                            
+                            return (
+                              <div 
+                                key={variant.variant_id} 
+                                className={`border rounded p-4 ${
+                                  isAiRecommended 
+                                    ? 'border-blue-500 bg-blue-50 shadow-md' 
+                                    : 'border-gray-200'
+                                }`}
+                              >
+                                <div className="flex items-center justify-between mb-3">
+                                  <div className="flex items-center gap-2">
+                                    <h5 className="font-semibold">변형 {variant.variant_id}</h5>
+                                    {isAiRecommended && (
+                                      <span className="px-2 py-1 bg-blue-500 text-white text-xs rounded-full">
+                                        🤖 AI 추천
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <span className={`px-2 py-1 rounded text-sm ${
+                                      isAiRecommended ? 'bg-blue-200 text-blue-800' : 'bg-blue-100'
+                                    }`}>
+                                      AI 점수: {variant.ai_score.toFixed(3)}
+                                    </span>
+                                    <span className="px-2 py-1 bg-green-100 rounded text-sm">
+                                      신뢰도: {((variant.ai_confidence || 0) * 100).toFixed(1)}%
+                                    </span>
+                                  </div>
+                                                                </div>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                                  <div>CVR: {(variant.cvr * 100).toFixed(2)}%</div>
+                                  <div>장바구니율: {(variant.cart_add_rate * 100).toFixed(2)}%</div>
+                                  <div>장바구니 CVR: {(variant.cart_conversion_rate * 100).toFixed(2)}%</div>
+                                  <div>오류율: {(variant.error_rate * 100).toFixed(2)}%</div>
+                                  <div>평균 로드시간: {variant.avg_page_load_time.toFixed(0)}ms</div>
+                                  <div>클릭수: {variant.clicks}</div>
+                                  <div>구매수: {variant.purchases}</div>
+                                  <div>매출: ₩{variant.revenue.toLocaleString()}</div>
                                 </div>
                               </div>
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                                <div>CVR: {(variant.cvr * 100).toFixed(2)}%</div>
-                                <div>장바구니율: {(variant.cart_add_rate * 100).toFixed(2)}%</div>
-                                <div>장바구니 CVR: {(variant.cart_conversion_rate * 100).toFixed(2)}%</div>
-                                <div>오류율: {(variant.error_rate * 100).toFixed(2)}%</div>
-                                <div>평균 로드시간: {variant.avg_page_load_time.toFixed(0)}ms</div>
-                                <div>클릭수: {variant.clicks}</div>
-                                <div>구매수: {variant.purchases}</div>
-                                <div>매출: ₩{variant.revenue.toLocaleString()}</div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                            );
+                          })}
+                          </div>
                       </div>
                     </div>
                   </div>
@@ -265,14 +297,6 @@ const WinnerSelection: React.FC = () => {
 
                 {/* 액션 버튼들 */}
                 <div className="flex gap-4 flex-wrap">
-                  <Button
-                    onClick={handleDetermineWinner}
-                    disabled={determineWinnerMutation.isPending || !winnerStatus?.can_select_winner}
-                    className="bg-blue-500 hover:bg-blue-600"
-                  >
-                    {determineWinnerMutation.isPending ? 'AI 분석 중...' : '🤖 AI 승자 결정'}
-                  </Button>
-
                   <div className="flex items-center gap-2">
                     <select
                       className="border rounded px-3 py-2"
@@ -280,29 +304,82 @@ const WinnerSelection: React.FC = () => {
                       onChange={(e) => setSelectedVariantId(e.target.value)}
                     >
                       <option value="">변형 선택</option>
-                      {aiAnalysis?.variant_analysis.map((variant) => (
-                        <option key={variant.variant_id} value={variant.variant_id}>
-                          변형 {variant.variant_id} (AI점수: {variant.ai_score.toFixed(3)})
-                        </option>
-                      ))}
+                      {aiAnalysis?.variant_analysis.map((variant) => {
+                        // AI 점수가 가장 높은 변형 찾기
+                        const maxAiScore = Math.max(...aiAnalysis.variant_analysis.map(v => v.ai_score));
+                        const isAiRecommended = variant.ai_score === maxAiScore;
+                        
+                        return (
+                          <option key={variant.variant_id} value={variant.variant_id}>
+                            변형 {variant.variant_id} (AI점수: {variant.ai_score.toFixed(3)}) {isAiRecommended ? '🤖 AI 추천' : ''}
+                          </option>
+                        );
+                      })}
                     </select>
                     <Button
                       onClick={handleSelectWinner}
-                      disabled={selectWinnerMutation.isPending || !selectedVariantId}
-                      className="bg-green-500 hover:bg-green-600"
+                      disabled={selectWinnerMutation.isPending || !selectedVariantId || winnerStatus?.winner_selected}
+                      className={`${
+                        selectWinnerMutation.isPending || !selectedVariantId || winnerStatus?.winner_selected
+                          ? 'bg-gray-400 cursor-not-allowed'
+                          : 'bg-green-500 hover:bg-green-600'
+                      }`}
                     >
                       {selectWinnerMutation.isPending ? '선택 중...' : '👤 수동 승자 선택'}
                     </Button>
                   </div>
 
                   <Button
-                    onClick={handleNextCycle}
-                    disabled={nextCycleMutation.isPending || !winnerStatus?.winner_selected}
+                    onClick={() => setShowNextCycleForm(true)}
+                    disabled={!winnerStatus?.winner_selected}
                     className="bg-purple-500 hover:bg-purple-600"
                   >
-                    {nextCycleMutation.isPending ? '진행 중...' : '🔄 다음 사이클'}
+                    🔄 다음 사이클
                   </Button>
                 </div>
+
+                {/* 다음 사이클 생성 폼 */}
+                {showNextCycleForm && (
+                  <div className="border rounded-lg p-4 bg-blue-50">
+                    <h3 className="text-lg font-semibold mb-3">🔄 다음 사이클 생성</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          새로운 B안 이미지 URL
+                        </label>
+                        <input
+                          type="url"
+                          value={newChallengerImageUrl}
+                          onChange={(e) => setNewChallengerImageUrl(e.target.value)}
+                          placeholder="https://example.com/image.jpg"
+                          className="w-full border rounded px-3 py-2"
+                        />
+                        <p className="text-sm text-gray-600 mt-1">
+                          이전 승자가 새로운 A안이 되고, 입력한 이미지가 새로운 B안이 됩니다.
+                        </p>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => nextCycleMutation.mutate(newChallengerImageUrl)}
+                          disabled={nextCycleMutation.isPending || !newChallengerImageUrl}
+                          className="bg-purple-500 hover:bg-purple-600"
+                        >
+                          {nextCycleMutation.isPending ? '생성 중...' : '다음 사이클 생성'}
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            setShowNextCycleForm(false);
+                            setNewChallengerImageUrl('');
+                          }}
+                          variant="outline"
+                        >
+                          취소
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

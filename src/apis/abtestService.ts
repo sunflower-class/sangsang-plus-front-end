@@ -177,9 +177,16 @@ export const selectWinner = (testId: string, variantId: string) =>
     api.post(`/test/${testId}/select-winner/${variantId}`)
   );
 
-export const nextCycle = (testId: string) =>
-  requestWrapper<{ status: string; message: string }>(() => 
-    api.post(`/test/${testId}/next-cycle`)
+export const nextCycle = (testId: string, challengerImageUrl: string) =>
+  requestWrapper<{ 
+    status: string; 
+    message: string; 
+    new_test_id: number;
+    new_test_name: string;
+  }>(() => 
+    api.post(`/test/${testId}/next-cycle`, {
+      challenger_image_url: challengerImageUrl
+    })
   );
 
 
