@@ -1,8 +1,9 @@
 <div align="center">
 <h1>[KT AIVLE School] 상상더하기 (Sangsang Plus)</h1>
-<h3>AI 기반 차세대 E-Commerce 플랫폼</h3>
+<h3>AI 기반 이커머스 상세페이지 자동 생성 및 최적화 솔루션</h3>
 <br/>
-<!-- 프로젝트 대표 이미지를 삽입해주세요. -->
+<img width="758" alt="01 썸네일" src="https://github.com/user-attachments/assets/adbf3c61-0106-46ff-8141-520fa02a8ea1" />
+
 <!-- <img src="YOUR_PROJECT_IMAGE_URL" alt="Project Banner" width="800"/> -->
 <p>
   <strong>상상더하기</strong>는 최신 AI 기술을 접목한 마이크로서비스 아키텍처 기반의 E-Commerce 플랫폼입니다. <br />
@@ -76,3 +77,10 @@
     - **Kubernetes**: `kubectl apply -f k8s/` 명령어를 통해 클러스터에 전체 서비스를 배포할 수 있습니다.
 
 자세한 내용은 각 서비스의 `README.md`를 참고해주세요.
+
+## 🎥 소개영상
+ 
+
+
+https://github.com/user-attachments/assets/1341fd25-0cfd-41ab-926a-9ff4478bcee6
+
